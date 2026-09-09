@@ -1,0 +1,18 @@
+Package: teachRai
+Title: Teaching-Focused RStudio Addin for Working with Ellmer
+Version: 0.1.0
+Authors@R:
+    person("Philip", "Leftwich", , "Philip-Leftwich@users.noreply.github.com", role = c("aut", "cre"))
+Description: A small, student-friendly RStudio addin built on ellmer for
+    explaining code, giving hints, and helping with debugging.
+License: MIT + file LICENSE
+URL: https://github.com/Philip-Leftwich/teachRai
+BugReports: https://github.com/Philip-Leftwich/teachRai/issues
+Imports:
+    ellmer
+Suggests:
+    rstudioapi,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+NeedsCompilation: no

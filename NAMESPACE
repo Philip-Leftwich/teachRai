@@ -1,0 +1,5 @@
+export(teachr_debug)
+export(teachr_explain)
+export(teachr_help)
+export(teachr_hint)
+export(teachr_setup)
