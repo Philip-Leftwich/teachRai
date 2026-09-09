@@ -1,5 +1,9 @@
 teachr_help <- function(choice = NULL,
                         context = NULL,
+                        goal_text = NULL,
+                        data_columns = NULL,
+                        object_names = NULL,
+                        packages_loaded = NULL,
                         model = "gemini-3.7-flash",
                         api_key = Sys.getenv("GEMINI_API_KEY"),
                         quiet = FALSE) {
@@ -8,6 +12,10 @@ teachr_help <- function(choice = NULL,
   teachr_run_mode(
     mode = mode,
     context = context,
+    goal_text = goal_text,
+    data_columns = data_columns,
+    object_names = object_names,
+    packages_loaded = packages_loaded,
     model = model,
     api_key = api_key,
     quiet = quiet

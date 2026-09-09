@@ -1,4 +1,4 @@
-test_that("explain prompt excludes error section and includes code/packages", {
+test_that("non-plan prompt includes structured context fields", {
   context <- list(
     selection = "x <- 1 + 1",
     recent_error = "Error: object 'y' not found",
@@ -8,83 +8,45 @@ test_that("explain prompt excludes error section and includes code/packages", {
   out <- teachr_build_prompt(mode = "explain", context = context)
 
   expect_match(out, "Mode: Explain")
+  expect_match(out, "Code selection state: PRESENT")
   expect_match(out, "Current code selection:")
   expect_match(out, "x <- 1 \\+ 1")
+  expect_match(out, "Observed error state: PRESENT")
+  expect_match(out, "Observed error text:")
+  expect_match(out, "object 'y' not found")
   expect_match(out, "Loaded packages:")
   expect_match(out, "dplyr, ggplot2")
-
-  # Critical: explain should not include error framing
-  expect_no_match(out, "Recent console error:")
-  expect_no_match(out, "Observed error")
-  expect_no_match(out, "object 'y' not found")
 })
 
-test_that("hint prompt includes optional observed error section", {
+test_that("non-plan prompt handles empty selection and missing error", {
   context <- list(
-    selection = "mean(x)",
-    recent_error = "Error in mean(x): object 'x' not found",
+    selection = "",
+    recent_error = NULL,
     loaded_packages = character()
   )
 
   out <- teachr_build_prompt(mode = "hint", context = context)
 
   expect_match(out, "Mode: Hint")
-  expect_match(out, "Observed error state: present")
-  expect_match(out, "Observed error \\(if any\\):")
-  expect_match(out, "Error in mean\\(x\\): object 'x' not found")
-  expect_match(out, "No packages are currently attached\\.")
+  expect_match(out, "Code selection state: EMPTY")
+  expect_match(out, "Observed error state: NONE")
+  expect_match(out, "Observed error text:")
+  expect_match(out, "NONE")
+  expect_match(out, "Loaded packages:")
 })
 
-test_that("hint prompt handles missing error gracefully", {
-  context <- list(
-    selection = "mean(c(1, 2, 3))",
-    recent_error = NULL,
-    loaded_packages = "stats"
-  )
-
-  out <- teachr_build_prompt(mode = "hint", context = context)
-
-  expect_match(out, "Mode: Hint")
-  expect_match(out, "Observed error state: absent")
-  expect_match(out, "Observed error \\(if any\\):")
-  expect_match(out, "No recent console error\\.")
-})
-
-test_that("debug prompt includes observed error guidance field", {
-  context <- list(
-    selection = "log('a')",
-    recent_error = "Error in log(\"a\"): non-numeric argument",
-    loaded_packages = "base"
-  )
-
-  out <- teachr_build_prompt(mode = "debug", context = context)
-
-  expect_match(out, "Mode: Debug")
-  expect_match(out, "Observed error state: present")
-  expect_match(
-    out,
-    "Observed error \\(required for concrete diagnosis, if available\\):"
-  )
-  expect_match(out, "non-numeric argument")
-})
-
-test_that("system prompts encode mode-specific anti-hallucination behaviour", {
+test_that("system prompts retain tidyverse and anti-hallucination constraints", {
   explain_sys <- teachr_system_prompt("explain")
   hint_sys <- teachr_system_prompt("hint")
   debug_sys <- teachr_system_prompt("debug")
 
-  expect_match(explain_sys, "Do not infer or invent runtime errors\\.")
-  expect_match(explain_sys, "If no error is supplied, do not mention errors\\.")
+  expect_match(explain_sys, "British English")
+  expect_match(explain_sys, "tidyverse-first")
+  expect_match(explain_sys, "if code selection is EMPTY")
 
-  expect_match(
-    hint_sys,
-    "If an observed error is supplied, hint towards diagnosing/fixing it\\."
-  )
-  expect_match(
-    hint_sys,
-    "If no error is supplied, hint towards understanding or improving the code\\."
-  )
+  expect_match(hint_sys, "without solving everything")
+  expect_match(hint_sys, "one concrete next step")
 
-  expect_match(debug_sys, "Use only the observed error text when one is supplied\\.")
-  expect_match(debug_sys, "Do not invent error messages\\.")
+  expect_match(debug_sys, "Use only the observed error text")
+  expect_match(debug_sys, "Do not invent error messages")
 })

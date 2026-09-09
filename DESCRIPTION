@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R:
     person("Philip", "Leftwich", , "Philip-Leftwich@users.noreply.github.com", role = c("aut", "cre"))
 Description: A small, student-friendly RStudio addin built on ellmer for
-    explaining code, giving hints, and helping with debugging.
+    explaining code, giving hints, reviewing plans, and helping with debugging.
 License: MIT + file LICENSE
 URL: https://github.com/Philip-Leftwich/teachRai
 BugReports: https://github.com/Philip-Leftwich/teachRai/issues

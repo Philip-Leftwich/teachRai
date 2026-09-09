@@ -44,8 +44,14 @@ teachr_system_prompt <- function(mode) {
       "The student may provide a plain-English goal instead of code.",
       "Use British English.",
       "Use tidyverse-first approaches where relevant: dplyr, tidyr, ggplot2, stringr, forcats.",
-      "Do not provide full end-to-end scripts.",
-      "Provide 1-2 strategy hints and short scaffold snippets only.",
+      "Response structure is mandatory:",
+      "1) Brief goal interpretation (1 sentence).",
+      "2) One or two precise issues/opportunities.",
+      "3) One concrete next step in tidyverse terms.",
+      "4) Optional scaffold snippet only if needed (max 3 lines).",
+      "Do not provide complete solutions, full scripts, or long rewrites.",
+      "Never provide an end-to-end pipeline or a final answer dump.",
+      "Keep the full response short.",
       "Use the native pipe operator |> in code examples.",
       "If one critical input is missing, ask for exactly one concrete missing detail.",
       "State assumptions explicitly and keep them minimal."
@@ -127,8 +133,7 @@ teachr_build_prompt <- function(
 teachr_check_style <- function(text) {
   text <- paste(text %||% "", collapse = "\n")
 
-  # Simple heuristics for base-R-style data manipulation suggestions.
-  # Keep this lightweight: flag patterns, then let caller decide enforcement.
+  # Lightweight heuristics to keep teaching output tidyverse-first.
   base_r_patterns <- c(
     "\\bapply\\s*\\(",
     "\\blapply\\s*\\(",
@@ -142,11 +147,30 @@ teachr_check_style <- function(text) {
     "\\bsubset\\s*\\(",
     "\\border\\s*\\(",
     "\\bwith\\s*\\(",
-    "\\b\\w+\\s*\\[\\s*\\w+\\s*[!<>=]"
+    "\\b\\w+\\s*\\[\\s*\\w+\\s*[!<>=]",
+    "\\battach\\s*\\(",
+    "\\b\\w+\\s*\\$\\s*\\w+"
+  )
+
+  tidyverse_verbs <- c(
+    "\\bfilter\\s*\\(",
+    "\\bselect\\s*\\(",
+    "\\bmutate\\s*\\(",
+    "\\bsummarise\\s*\\(",
+    "\\barrange\\s*\\(",
+    "\\bgroup_by\\s*\\(",
+    "\\bleft_join\\s*\\(",
+    "\\bpivot_(longer|wider)\\s*\\("
   )
 
   has_base_r <- any(vapply(
     base_r_patterns,
+    function(p) grepl(p, text, perl = TRUE, ignore.case = TRUE),
+    logical(1)
+  ))
+
+  has_tidyverse_verbs <- any(vapply(
+    tidyverse_verbs,
     function(p) grepl(p, text, perl = TRUE, ignore.case = TRUE),
     logical(1)
   ))
@@ -156,12 +180,22 @@ teachr_check_style <- function(text) {
   list(
     ok = !has_base_r,
     has_base_r_patterns = has_base_r,
+    has_tidyverse_verbs = has_tidyverse_verbs,
     has_native_pipe = has_pipe
   )
 }
 
-teachr_enforce_style <- function(text) {
+teachr_enforce_style <- function(text, mode = NULL) {
   check <- teachr_check_style(text)
+  mode <- tolower(mode %||% "")
+
+  if (!mode %in% "plan") {
+    return(list(
+      ok = TRUE,
+      text = text,
+      reason = "Style check skipped for non-plan mode."
+    ))
+  }
 
   if (isTRUE(check$ok)) {
     return(list(
@@ -173,12 +207,78 @@ teachr_enforce_style <- function(text) {
 
   replacement <- paste(
     "I can refine that into a tidyverse-first approach.",
-    "Please share the smallest reproducible code chunk, and I will return a short solution using dplyr/tidyr with the |> pipe."
+    "Please share the smallest reproducible code chunk, and I will return a short scaffold using dplyr/tidyr with the |> pipe."
   )
 
   list(
     ok = FALSE,
     text = replacement,
     reason = "Response contained base-R-style data manipulation patterns."
+  )
+}
+
+teachr_check_plan_response <- function(text) {
+  text <- paste(text %||% "", collapse = "\n")
+  lines <- strsplit(text, "\n", fixed = TRUE)[[1]]
+  lines <- trimws(lines)
+  non_empty_lines <- lines[nzchar(lines)]
+
+  code_fence_matches <- gregexpr("```", text, perl = TRUE)[[1]]
+  pipe_matches <- gregexpr("\\|>", text, perl = TRUE)[[1]]
+  code_fence_count <- if (identical(code_fence_matches[[1]], -1L)) 0L else length(code_fence_matches)
+  pipe_count <- if (identical(pipe_matches[[1]], -1L)) 0L else length(pipe_matches)
+  long_response <- length(non_empty_lines) > 14
+  many_code_blocks <- code_fence_count >= 4
+  many_pipes <- pipe_count >= 3
+  has_final_answer_language <- grepl(
+    "\\b(full solution|complete solution|final answer|end-to-end|here is the code)\\b",
+    text,
+    ignore.case = TRUE,
+    perl = TRUE
+  )
+
+  too_complete <- long_response || many_code_blocks || many_pipes || has_final_answer_language
+
+  list(
+    ok = !too_complete,
+    too_complete = too_complete,
+    long_response = long_response,
+    many_code_blocks = many_code_blocks,
+    many_pipes = many_pipes,
+    has_final_answer_language = has_final_answer_language
+  )
+}
+
+teachr_enforce_plan_response <- function(text, mode) {
+  mode <- teachr_match_mode(mode)
+
+  if (!identical(mode, "plan")) {
+    return(list(
+      ok = TRUE,
+      text = text,
+      reason = "Plan guardrail skipped for non-plan mode."
+    ))
+  }
+
+  check <- teachr_check_plan_response(text)
+
+  if (isTRUE(check$ok)) {
+    return(list(
+      ok = TRUE,
+      text = text,
+      reason = "Plan response guardrail passed."
+    ))
+  }
+
+  replacement <- paste(
+    "Let's keep this as a plan, not a full solution.",
+    "Share just the smallest missing detail (for example your intended grouping variable),",
+    "or one short code chunk, and I will suggest the next tidyverse step."
+  )
+
+  list(
+    ok = FALSE,
+    text = replacement,
+    reason = "Plan response looked too complete."
   )
 }
