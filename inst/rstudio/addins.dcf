@@ -1,0 +1,4 @@
+Name: teachRai Assistant
+Description: Open the teachRai teaching assistant menu
+Binding: teachr_help
+Interactive: false
