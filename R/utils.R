@@ -8,9 +8,10 @@ teachr_modes <- function() {
 
 teachr_match_mode <- function(mode) {
   mode <- tolower(mode)
+  valid_modes <- c(teachr_modes(), "plan")
 
-  if (!mode %in% teachr_modes()) {
-    stop("`mode` must be one of: explain, hint, or debug.", call. = FALSE)
+  if (!mode %in% valid_modes) {
+    stop("`mode` must be one of: explain, hint, debug, or plan.", call. = FALSE)
   }
 
   mode

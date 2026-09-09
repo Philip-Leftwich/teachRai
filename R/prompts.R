@@ -38,12 +38,55 @@ teachr_system_prompt <- function(mode) {
       "Hard rule: if observed error state is NONE, do not provide a diagnosis.",
       "If no observed error is supplied, state this clearly and request the next run/check to capture one.",
       "Do not invent error messages, warnings, or causes."
+    ),
+    plan = paste(
+      "You are a calm teaching assistant for R learners.",
+      "The student may provide a plain-English goal instead of code.",
+      "Use British English.",
+      "Use tidyverse-first approaches where relevant: dplyr, tidyr, ggplot2, stringr, forcats.",
+      "Do not provide full end-to-end scripts.",
+      "Provide 1-2 strategy hints and short scaffold snippets only.",
+      "Use the native pipe operator |> in code examples.",
+      "If one critical input is missing, ask for exactly one concrete missing detail.",
+      "State assumptions explicitly and keep them minimal."
     )
   )
 }
 
-teachr_build_prompt <- function(mode, context) {
+teachr_build_prompt <- function(
+  mode,
+  context = NULL,
+  goal_text = NULL,
+  data_columns = NULL,
+  object_names = NULL,
+  packages_loaded = NULL
+) {
   mode <- teachr_match_mode(mode)
+
+  if (identical(mode, "plan")) {
+    if (is.null(goal_text) || !nzchar(trimws(goal_text))) {
+      stop("`goal_text` must be provided and non-empty for `plan` mode.", call. = FALSE)
+    }
+
+    lines <- c(
+      "Student goal:",
+      goal_text
+    )
+
+    if (!is.null(data_columns) && length(data_columns) > 0) {
+      lines <- c(lines, "", "Known data columns:", paste(data_columns, collapse = ", "))
+    }
+
+    if (!is.null(object_names) && length(object_names) > 0) {
+      lines <- c(lines, "", "Known object names:", paste(object_names, collapse = ", "))
+    }
+
+    if (!is.null(packages_loaded) && length(packages_loaded) > 0) {
+      lines <- c(lines, "", "Loaded packages:", paste(packages_loaded, collapse = ", "))
+    }
+
+    return(teachr_compact_lines(lines))
+  }
 
   selection <- context$selection %||% ""
   selection_state <- if (nzchar(selection)) "PRESENT" else "EMPTY"
