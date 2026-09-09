@@ -72,19 +72,35 @@ test_that("system prompts encode mode-specific anti-hallucination behaviour", {
   explain_sys <- teachr_system_prompt("explain")
   hint_sys <- teachr_system_prompt("hint")
   debug_sys <- teachr_system_prompt("debug")
+  plan_sys <- teachr_system_prompt("plan")
 
-  expect_match(explain_sys, "Do not infer or invent runtime errors\\.")
-  expect_match(explain_sys, "If no error is supplied, do not mention errors\\.")
+  expect_match(explain_sys, "Hard rule: if observed error state is NONE")
 
-  expect_match(
-    hint_sys,
-    "If an observed error is supplied, hint towards diagnosing/fixing it\\."
-  )
-  expect_match(
-    hint_sys,
-    "If no error is supplied, hint towards understanding or improving the code\\."
-  )
+  expect_match(hint_sys, "Hard rule: if observed error state is NONE")
 
-  expect_match(debug_sys, "Use only the observed error text when one is supplied\\.")
+  expect_match(debug_sys, "Use only the observed error text when supplied\\.")
   expect_match(debug_sys, "Do not invent error messages\\.")
+  expect_match(plan_sys, "plain-English goal")
+  expect_match(plan_sys, "ask for exactly one concrete missing input")
+  expect_match(plan_sys, "not a full script")
+})
+
+test_that("plan prompt includes goal text as first-class context", {
+  context <- list(
+    goal_text = "Summarise mean score by class and plot the result",
+    selection = "scores, class, mean_score",
+    recent_error = NULL,
+    loaded_packages = c("dplyr", "ggplot2")
+  )
+
+  out <- teachr_build_prompt(mode = "plan", context = context)
+
+  expect_match(out, "Mode: Plan")
+  expect_match(out, "Goal text state: present")
+  expect_match(out, "Student goal:")
+  expect_match(out, "Summarise mean score by class and plot the result")
+  expect_match(out, "Code/object context state: present")
+  expect_match(out, "Available code or object context:")
+  expect_match(out, "scores, class, mean_score")
+  expect_no_match(out, "Observed error")
 })

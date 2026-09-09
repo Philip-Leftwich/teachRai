@@ -38,6 +38,16 @@ teachr_system_prompt <- function(mode) {
       "Hard rule: if observed error state is NONE, do not provide a diagnosis.",
       "If no observed error is supplied, state this clearly and request the next run/check to capture one.",
       "Do not invent error messages, warnings, or causes."
+    ),
+    plan = paste(
+      "You are a calm teaching assistant for R learners.",
+      "The student may provide a plain-English goal instead of code.",
+      "Provide hints in British English on how to implement that goal using tidyverse-first approaches.",
+      "Do not suggest base R alternatives for data tasks unless explicitly requested.",
+      "Prefer short, clean, and well-organised code snippets using |> where possible.",
+      "Give one or two strategy hints, not a full script.",
+      "Hard rule: if the goal is missing or a key implementation detail is missing, ask for exactly one concrete missing input.",
+      "Make any assumptions explicit and keep them minimal."
     )
   )
 }
@@ -45,37 +55,107 @@ teachr_system_prompt <- function(mode) {
 teachr_build_prompt <- function(mode, context) {
   mode <- teachr_match_mode(mode)
 
-  selection <- context$selection %||% ""
-  selection_state <- if (nzchar(selection)) "PRESENT" else "EMPTY"
-  selection_text <- if (nzchar(selection)) selection else "EMPTY"
+  selection <- trimws(context$selection %||% "")
+  selection_state <- if (nzchar(selection)) "present" else "absent"
+  selection_text <- if (nzchar(selection)) selection else "No code is currently selected."
 
   packages <- context$loaded_packages %||% character()
-  packages_text <- if (length(packages) == 0) "NONE" else paste(packages, collapse = ", ")
+  packages <- packages[nzchar(packages)]
+  packages_text <- if (length(packages) == 0) {
+    "No packages are currently attached."
+  } else {
+    paste(packages, collapse = ", ")
+  }
 
-  recent_error <- context$recent_error %||% ""
-  error_state <- if (nzchar(recent_error)) "PRESENT" else "NONE"
-  recent_error_text <- if (nzchar(recent_error)) recent_error else "NONE"
+  recent_error <- trimws(context$recent_error %||% "")
+  error_state <- if (nzchar(recent_error)) "present" else "absent"
+  recent_error_text <- if (nzchar(recent_error)) recent_error else "No recent console error."
 
-  base_lines <- c(
-    paste("Mode:", teachr_title_case(mode)),
-    "",
-    paste("Code selection state:", selection_state),
-    "Current code selection:",
-    selection_text,
-    "",
-    paste("Observed error state:", error_state),
-    "Observed error text:",
-    recent_error_text,
-    "",
-    "Loaded packages:",
-    packages_text,
-    "",
-    "Response rules:",
-    "1) If observed error state is NONE, do not mention any specific error/problem.",
-    "2) If code selection state is EMPTY, do not infer what the code does.",
-    "3) Ask for exactly one concrete next step.",
-    "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
-    "5) Suggest short, readable code chunks and use |> where possible."
+  goal_text <- trimws(context$goal_text %||% "")
+  goal_state <- if (nzchar(goal_text)) "present" else "absent"
+  goal_text_out <- if (nzchar(goal_text)) goal_text else "No goal text was supplied."
+
+  base_lines <- switch(
+    mode,
+    explain = c(
+      paste("Mode:", teachr_title_case(mode)),
+      "",
+      paste("Code selection state:", selection_state),
+      "Current code selection:",
+      selection_text,
+      "",
+      "Loaded packages:",
+      packages_text,
+      "",
+      "Response rules:",
+      "1) Explain only the supplied code.",
+      "2) If code selection state is absent, say what is missing and ask for one code example.",
+      "3) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
+      "4) Suggest short, readable code chunks and use |> where possible."
+    ),
+    hint = c(
+      paste("Mode:", teachr_title_case(mode)),
+      "",
+      paste("Code selection state:", selection_state),
+      "Current code selection:",
+      selection_text,
+      "",
+      paste("Observed error state:", error_state),
+      "Observed error (if any):",
+      recent_error_text,
+      "",
+      "Loaded packages:",
+      packages_text,
+      "",
+      "Response rules:",
+      "1) If code selection state is absent, do not infer what the code does.",
+      "2) If observed error state is absent, do not mention any specific error/problem.",
+      "3) Give one concrete next step without solving everything.",
+      "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
+      "5) Suggest short, readable code chunks and use |> where possible."
+    ),
+    debug = c(
+      paste("Mode:", teachr_title_case(mode)),
+      "",
+      paste("Code selection state:", selection_state),
+      "Current code selection:",
+      selection_text,
+      "",
+      paste("Observed error state:", error_state),
+      "Observed error (required for concrete diagnosis, if available):",
+      recent_error_text,
+      "",
+      "Loaded packages:",
+      packages_text,
+      "",
+      "Response rules:",
+      "1) Use only the supplied error text when it is present.",
+      "2) If observed error state is absent, request the next run/check to capture one.",
+      "3) If code selection state is absent, do not infer what the code does.",
+      "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
+      "5) Suggest short, readable code chunks and use |> where possible."
+    ),
+    plan = c(
+      paste("Mode:", teachr_title_case(mode)),
+      "",
+      paste("Goal text state:", goal_state),
+      "Student goal:",
+      goal_text_out,
+      "",
+      paste("Code/object context state:", selection_state),
+      "Available code or object context:",
+      selection_text,
+      "",
+      "Loaded packages:",
+      packages_text,
+      "",
+      "Response rules:",
+      "1) If goal text state is absent, ask for exactly one concrete goal.",
+      "2) If a key implementation detail is missing, ask for exactly one concrete missing input.",
+      "3) Give one or two tidyverse-first strategy hints, not a full solution.",
+      "4) State assumptions explicitly and keep them minimal.",
+      "5) Suggest short, readable code chunks and use |> where possible."
+    )
   )
 
   teachr_compact_lines(base_lines)

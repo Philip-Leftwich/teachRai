@@ -3,14 +3,14 @@
 }
 
 teachr_modes <- function() {
-  c("explain", "hint", "debug")
+  c("explain", "hint", "debug", "plan")
 }
 
 teachr_match_mode <- function(mode) {
   mode <- tolower(mode)
 
   if (!mode %in% teachr_modes()) {
-    stop("`mode` must be one of: explain, hint, or debug.", call. = FALSE)
+    stop("`mode` must be one of: explain, hint, debug, or plan.", call. = FALSE)
   }
 
   mode
@@ -21,7 +21,7 @@ teachr_resolve_mode <- function(choice) {
     modes <- teachr_modes()
 
     if (length(choice) != 1 || is.na(choice) || choice < 1 || choice > length(modes)) {
-      stop("Menu choice must be 1, 2, or 3.", call. = FALSE)
+      stop("Menu choice must be 1, 2, 3, or 4.", call. = FALSE)
     }
 
     return(modes[[choice]])
@@ -39,7 +39,7 @@ teachr_menu_choice <- function() {
   }
 
   choice <- utils::menu(
-    choices = c("Explain selection", "Give a hint", "Help debug"),
+    choices = c("Explain selection", "Give a hint", "Help debug", "Plan from goal"),
     title = "teachRai Assistant"
   )
 

@@ -9,7 +9,7 @@ context without adding a large interface or complex setup.
 
 - a guided setup helper for saving a Gemini API key in `~/.Renviron`
 - a lightweight RStudio context capture helper
-- three teaching modes: explain, hint, and debug
+- four teaching modes: explain, hint, debug, and plan
 - a Gemini-first chat wrapper built on `ellmer`
 - a simple RStudio addin entry point
 - basic console output rendering
@@ -54,6 +54,7 @@ The addin menu lets you choose between:
 - **Explain** — ask for a student-friendly explanation
 - **Hint** — ask for a helpful next step without giving everything away
 - **Debug** — ask for help understanding an error or likely bug
+- **Plan** — ask for intent-first coding hints from a plain-English goal
 
 You can also call the actions directly:
 
@@ -61,6 +62,15 @@ You can also call the actions directly:
 teachr_explain()
 teachr_hint()
 teachr_debug()
+```
+
+For the new intent-first mode, supply a short goal:
+
+```r
+teachr_help(
+  choice = "plan",
+  goal_text = "Summarise mean score by class and plot the result"
+)
 ```
 
 ## How teachRai works

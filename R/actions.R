@@ -39,10 +39,15 @@ teachr_debug <- function(context = NULL,
 
 teachr_run_mode <- function(mode,
                             context = NULL,
+                            goal_text = NULL,
                             model = "gemini-3.7-flash",
                             api_key = Sys.getenv("GEMINI_API_KEY"),
                             quiet = FALSE) {
   context <- context %||% teachr_capture_context()
+  context$goal_text <- teachr_value_or_default(
+    goal_text,
+    context$goal_text %||% ""
+  )
   prompt <- teachr_build_prompt(mode = mode, context = context)
   response <- teachr_chat(
     prompt = prompt,

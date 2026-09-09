@@ -2,6 +2,7 @@ test_that("numeric addin choices resolve to modes", {
   expect_identical(teachRai:::teachr_resolve_mode(1), "explain")
   expect_identical(teachRai:::teachr_resolve_mode(2), "hint")
   expect_identical(teachRai:::teachr_resolve_mode(3), "debug")
+  expect_identical(teachRai:::teachr_resolve_mode(4), "plan")
 })
 
 test_that("renviron lines are updated in place", {
