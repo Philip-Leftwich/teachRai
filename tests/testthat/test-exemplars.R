@@ -44,10 +44,10 @@ test_that("retrieval uses error patterns for debug mode", {
   expect_identical(out$error_matches[[1]], 1L)
 })
 
-test_that("retrieval can fall back to exact package matches", {
+test_that("exact package matching helps rank topical plan matches", {
   out <- teachr_find_exemplars(
     mode = "plan",
-    goal_text = "I am not sure where to start.",
+    goal_text = "I want to join a lookup table and pivot the result longer.",
     recent_error = "",
     packages = c(" dplyr ", "TIDYR")
   )

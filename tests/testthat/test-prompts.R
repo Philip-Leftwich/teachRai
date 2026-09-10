@@ -58,6 +58,7 @@ test_that("hint exemplar formatting stays conservative", {
   expect_match(out, "Teaching exemplars:")
   expect_match(out, "Use these exemplars only to align terminology and approach\\.")
   expect_match(out, "Instructor hint:")
+  expect_match(out, "Provenance:")
   expect_no_match(out, "Instructor explanation:")
 })
 
