@@ -194,10 +194,6 @@ teachr_find_exemplars <- function(mode,
     keep <- keep | pool$error_matches > 0
   }
 
-  if (identical(mode, "plan")) {
-    keep <- keep | pool$package_matches > 0
-  }
-
   if (!any(keep)) {
     return(pool[0, , drop = FALSE])
   }

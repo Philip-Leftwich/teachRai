@@ -37,6 +37,29 @@ test_that("prompt leaves exemplar section out when nothing matches", {
   expect_no_match(out, "Teaching exemplars:")
 })
 
+test_that("prompt can format supplied exemplar rows directly", {
+  exemplar <- teachRai:::teachr_exemplars[
+    teachRai:::teachr_exemplars$mode == "hint",
+    ,
+    drop = FALSE
+  ][1, , drop = FALSE]
+
+  out <- teachr_build_prompt(
+    mode = "hint",
+    context = list(
+      selection = "placeholder",
+      recent_error = "",
+      loaded_packages = "dplyr"
+    ),
+    exemplars = exemplar
+  )
+
+  expect_match(out, "Teaching exemplars:")
+  expect_match(out, "Student question:")
+  expect_match(out, "Student code pattern:")
+  expect_match(out, "Provenance: Oct-Intro-Analytics teaching materials")
+})
+
 test_that("hint exemplar formatting stays conservative", {
   exemplars <- teachr_find_exemplars(
     mode = "hint",

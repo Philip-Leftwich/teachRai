@@ -181,7 +181,7 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
   lines <- c(
     lines,
     paste0("Tags: ", exemplar$tags[[1]]),
-    paste0("Provenance: ", exemplar$source_path[[1]])
+    paste0("Provenance: ", teachr_provenance_label(exemplar$source_path[[1]]))
   )
 
   teachr_compact_lines(lines)
@@ -190,6 +190,14 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
 teachr_inline_text <- function(x) {
   x <- gsub("\\s+", " ", x %||% "")
   trimws(x)
+}
+
+teachr_provenance_label <- function(source_path) {
+  if (!nzchar(source_path %||% "")) {
+    return("Teaching exemplar")
+  }
+
+  paste(trimws(strsplit(source_path, "/", fixed = TRUE)[[1]][1]), "teaching materials")
 }
 
 teachr_check_style <- function(text) {
