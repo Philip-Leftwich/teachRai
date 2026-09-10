@@ -71,6 +71,17 @@ test_that("retrieval stays empty when only packages are supplied", {
   expect_identical(nrow(out), 0L)
 })
 
+test_that("retrieval stays empty for debug error text without code context", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "",
+    recent_error = "Error in filter(): object 'Species' not found",
+    packages = c("dplyr", "janitor")
+  )
+
+  expect_identical(nrow(out), 0L)
+})
+
 test_that("short terms do not match inside unrelated words", {
   out <- teachr_find_exemplars(
     mode = "hint",

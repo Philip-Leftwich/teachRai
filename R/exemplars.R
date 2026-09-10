@@ -147,7 +147,7 @@ teachr_find_exemplars <- function(mode,
   package_tokens <- unique(packages)
   error_text <- teachr_normalise_text(recent_error)
 
-  if (!nzchar(selection_text) && !nzchar(goal_text_text) && !nzchar(error_text) && !length(package_tokens)) {
+  if (!nzchar(selection_text) && !nzchar(goal_text_text)) {
     return(pool[0, , drop = FALSE])
   }
 
@@ -224,7 +224,7 @@ teachr_format_exemplars <- function(exemplars, mode) {
     "Teaching exemplars:",
     "Use these exemplars only to align terminology and approach.",
     "Do not claim that the exemplar code or data belongs to the student.",
-    entries
+    unlist(strsplit(entries, "\n", fixed = TRUE), use.names = FALSE)
   )
 }
 
