@@ -59,7 +59,8 @@ teachr_build_prompt <- function(
   goal_text = NULL,
   data_columns = NULL,
   object_names = NULL,
-  packages_loaded = NULL
+  packages_loaded = NULL,
+  exemplars = NULL
 ) {
   mode <- teachr_match_mode(mode)
 
@@ -83,6 +84,12 @@ teachr_build_prompt <- function(
 
     if (!is.null(packages_loaded) && length(packages_loaded) > 0) {
       lines <- c(lines, "", "Loaded packages:", paste(packages_loaded, collapse = ", "))
+    }
+
+    exemplar_lines <- teachr_format_exemplars(exemplars, mode = mode)
+
+    if (length(exemplar_lines) > 0) {
+      lines <- c(lines, "", exemplar_lines)
     }
 
     return(teachr_compact_lines(lines))
@@ -121,7 +128,76 @@ teachr_build_prompt <- function(
     "5) Suggest short, readable code chunks and use |> where possible."
   )
 
+  exemplar_lines <- teachr_format_exemplars(exemplars, mode = mode)
+
+  if (length(exemplar_lines) > 0) {
+    base_lines <- c(base_lines, "", exemplar_lines)
+  }
+
   teachr_compact_lines(base_lines)
+}
+
+teachr_format_exemplars <- function(exemplars, mode) {
+  mode <- teachr_match_mode(mode)
+
+  if (!is.data.frame(exemplars) || !nrow(exemplars)) {
+    return(character())
+  }
+
+  entries <- vapply(
+    seq_len(nrow(exemplars)),
+    function(i) {
+      teachr_format_exemplar_entry(exemplars[i, , drop = FALSE], mode = mode)
+    },
+    character(1)
+  )
+
+  c(
+    "Teaching exemplars:",
+    "Use these exemplars only to align terminology and approach.",
+    "Do not claim that the exemplar code or data belongs to the student.",
+    unlist(strsplit(entries, "\n", fixed = TRUE), use.names = FALSE)
+  )
+}
+
+teachr_format_exemplar_entry <- function(exemplar, mode) {
+  lines <- c(
+    paste0("Exemplar ID: ", exemplar$id[[1]]),
+    paste0("Mode: ", teachr_title_case(exemplar$mode[[1]])),
+    paste0("Topic: ", exemplar$topic[[1]]),
+    paste0("Student question: ", exemplar$student_question[[1]]),
+    paste0("Likely misconception: ", exemplar$likely_misconception[[1]]),
+    paste0("Student code pattern: ", teachr_inline_text(exemplar$student_code[[1]])),
+    paste0("Instructor hint: ", exemplar$instructor_hint[[1]])
+  )
+
+  if (mode != "hint") {
+    lines <- c(
+      lines,
+      paste0("Instructor explanation: ", exemplar$instructor_explanation[[1]])
+    )
+  }
+
+  lines <- c(
+    lines,
+    paste0("Tags: ", exemplar$tags[[1]]),
+    paste0("Provenance: ", teachr_provenance_label(exemplar$source_path[[1]]))
+  )
+
+  teachr_compact_lines(lines)
+}
+
+teachr_inline_text <- function(x) {
+  x <- gsub("\\s+", " ", x %||% "")
+  trimws(x)
+}
+
+teachr_provenance_label <- function(source_path) {
+  if (!nzchar(source_path %||% "")) {
+    return("Teaching exemplar")
+  }
+
+  paste(trimws(strsplit(source_path, "/", fixed = TRUE)[[1]][1]), "teaching materials")
 }
 
 teachr_check_style <- function(text) {

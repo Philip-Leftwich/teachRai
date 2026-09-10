@@ -1,90 +1,140 @@
-test_that("explain prompt excludes error section and includes code/packages", {
+test_that("non-plan prompts include context states and response rules", {
   context <- list(
-    selection = "x <- 1 + 1",
-    recent_error = "Error: object 'y' not found",
+    selection = "penguins |> summarise(mean_mass = mean(body_mass_g))",
+    recent_error = "",
     loaded_packages = c("dplyr", "ggplot2")
   )
 
   out <- teachr_build_prompt(mode = "explain", context = context)
 
   expect_match(out, "Mode: Explain")
-  expect_match(out, "Current code selection:")
-  expect_match(out, "x <- 1 \\+ 1")
+  expect_match(out, "Code selection state: PRESENT")
+  expect_match(out, "Observed error state: NONE")
   expect_match(out, "Loaded packages:")
   expect_match(out, "dplyr, ggplot2")
-
-  # Critical: explain should not include error framing
-  expect_no_match(out, "Recent console error:")
-  expect_no_match(out, "Observed error")
-  expect_no_match(out, "object 'y' not found")
+  expect_match(out, "Response rules:")
+  expect_match(out, "Prefer tidyverse over base R")
 })
 
-test_that("hint prompt includes optional observed error section", {
+test_that("prompt leaves exemplar section out when nothing matches", {
   context <- list(
-    selection = "mean(x)",
-    recent_error = "Error in mean(x): object 'x' not found",
+    selection = "x <- 1 + 1",
+    recent_error = "",
     loaded_packages = character()
   )
 
-  out <- teachr_build_prompt(mode = "hint", context = context)
-
-  expect_match(out, "Mode: Hint")
-  expect_match(out, "Observed error state: present")
-  expect_match(out, "Observed error \\(if any\\):")
-  expect_match(out, "Error in mean\\(x\\): object 'x' not found")
-  expect_match(out, "No packages are currently attached\\.")
-})
-
-test_that("hint prompt handles missing error gracefully", {
-  context <- list(
-    selection = "mean(c(1, 2, 3))",
-    recent_error = NULL,
-    loaded_packages = "stats"
+  out <- teachr_build_prompt(
+    mode = "explain",
+    context = context,
+    exemplars = teachr_find_exemplars(
+      mode = "explain",
+      selection = context$selection,
+      recent_error = context$recent_error,
+      packages = context$loaded_packages
+    )
   )
 
-  out <- teachr_build_prompt(mode = "hint", context = context)
-
-  expect_match(out, "Mode: Hint")
-  expect_match(out, "Observed error state: absent")
-  expect_match(out, "Observed error \\(if any\\):")
-  expect_match(out, "No recent console error\\.")
+  expect_no_match(out, "Teaching exemplars:")
 })
 
-test_that("debug prompt includes observed error guidance field", {
-  context <- list(
-    selection = "log('a')",
-    recent_error = "Error in log(\"a\"): non-numeric argument",
-    loaded_packages = "base"
+test_that("prompt ignores non-data-frame exemplar input", {
+  out <- teachr_build_prompt(
+    mode = "explain",
+    context = list(
+      selection = "x <- 1 + 1",
+      recent_error = "",
+      loaded_packages = character()
+    ),
+    exemplars = list(id = "not-a-data-frame")
   )
 
-  out <- teachr_build_prompt(mode = "debug", context = context)
-
-  expect_match(out, "Mode: Debug")
-  expect_match(out, "Observed error state: present")
-  expect_match(
-    out,
-    "Observed error \\(required for concrete diagnosis, if available\\):"
-  )
-  expect_match(out, "non-numeric argument")
+  expect_no_match(out, "Teaching exemplars:")
 })
 
-test_that("system prompts encode mode-specific anti-hallucination behaviour", {
+test_that("prompt can format supplied exemplar rows directly", {
+  exemplar <- teachRai:::teachr_exemplars[
+    teachRai:::teachr_exemplars$mode == "hint",
+    ,
+    drop = FALSE
+  ][1, , drop = FALSE]
+
+  out <- teachr_build_prompt(
+    mode = "hint",
+    context = list(
+      selection = "placeholder",
+      recent_error = "",
+      loaded_packages = "dplyr"
+    ),
+    exemplars = exemplar
+  )
+
+  expect_match(out, "Teaching exemplars:")
+  expect_match(out, "Student question:")
+  expect_match(out, "Student code pattern:")
+  expect_match(out, "Provenance: Oct-Intro-Analytics teaching materials")
+})
+
+test_that("hint exemplar formatting stays conservative", {
+  exemplars <- teachr_find_exemplars(
+    mode = "hint",
+    selection = "penguins_clean_names |> summarise(mean_body_mass = mean(body_mass_g))",
+    recent_error = "",
+    packages = "dplyr"
+  )
+
+  out <- teachr_build_prompt(
+    mode = "hint",
+    context = list(
+      selection = "penguins_clean_names |> summarise(mean_body_mass = mean(body_mass_g))",
+      recent_error = "",
+      loaded_packages = "dplyr"
+    ),
+    exemplars = exemplars
+  )
+
+  expect_match(out, "Teaching exemplars:")
+  expect_match(out, "Use these exemplars only to align terminology and approach\\.")
+  expect_match(out, "Student code pattern:")
+  expect_match(out, "Instructor hint:")
+  expect_match(out, "Provenance:")
+  expect_no_match(out, "Instructor explanation:")
+})
+
+test_that("debug exemplar formatting includes explanation text", {
+  exemplars <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "penguins_clean |> filter(Species == \"Adelie\")",
+    recent_error = "Error in filter(): object 'Species' not found",
+    packages = c("dplyr", "janitor")
+  )
+
+  out <- teachr_build_prompt(
+    mode = "debug",
+    context = list(
+      selection = "penguins_clean |> filter(Species == \"Adelie\")",
+      recent_error = "Error in filter(): object 'Species' not found",
+      loaded_packages = c("dplyr", "janitor")
+    ),
+    exemplars = exemplars
+  )
+
+  expect_match(out, "Teaching exemplars:")
+  expect_match(out, "Student code pattern:")
+  expect_match(out, "Instructor hint:")
+  expect_match(out, "Instructor explanation:")
+})
+
+test_that("system prompts keep anti-hallucination rules", {
   explain_sys <- teachr_system_prompt("explain")
   hint_sys <- teachr_system_prompt("hint")
   debug_sys <- teachr_system_prompt("debug")
 
-  expect_match(explain_sys, "Do not infer or invent runtime errors\\.")
-  expect_match(explain_sys, "If no error is supplied, do not mention errors\\.")
+  expect_match(explain_sys, "Hard rule: if code selection is EMPTY")
+  expect_match(explain_sys, "Hard rule: if observed error state is NONE")
 
-  expect_match(
-    hint_sys,
-    "If an observed error is supplied, hint towards diagnosing/fixing it\\."
-  )
-  expect_match(
-    hint_sys,
-    "If no error is supplied, hint towards understanding or improving the code\\."
-  )
+  expect_match(hint_sys, "without solving everything")
+  expect_match(hint_sys, "Never speculate beyond it")
 
-  expect_match(debug_sys, "Use only the observed error text when one is supplied\\.")
-  expect_match(debug_sys, "Do not invent error messages\\.")
+  expect_match(debug_sys, "Use only the observed error text when supplied")
+  expect_match(debug_sys, "Do not invent error messages, warnings, or causes")
 })
