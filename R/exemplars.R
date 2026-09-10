@@ -147,7 +147,11 @@ teachr_find_exemplars <- function(mode,
   package_tokens <- unique(packages)
   error_text <- teachr_normalise_text(recent_error)
 
-  if (!nzchar(selection_text) && !nzchar(goal_text_text)) {
+  if (
+    !nzchar(selection_text) &&
+      !nzchar(goal_text_text) &&
+      !(identical(mode, "debug") && nzchar(error_text))
+  ) {
     return(pool[0, , drop = FALSE])
   }
 

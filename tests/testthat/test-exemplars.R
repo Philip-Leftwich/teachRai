@@ -71,7 +71,7 @@ test_that("retrieval stays empty when only packages are supplied", {
   expect_identical(nrow(out), 0L)
 })
 
-test_that("retrieval stays empty for debug error text without code context", {
+test_that("debug retrieval can use an observed error without code context", {
   out <- teachr_find_exemplars(
     mode = "debug",
     selection = "",
@@ -79,7 +79,8 @@ test_that("retrieval stays empty for debug error text without code context", {
     packages = c("dplyr", "janitor")
   )
 
-  expect_identical(nrow(out), 0L)
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-column-not-found")
 })
 
 test_that("short terms do not match inside unrelated words", {

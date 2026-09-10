@@ -71,7 +71,7 @@ teachRai keeps the first workflow deliberately simple:
 1. capture the current code selection in RStudio, if there is one
 2. capture the recent console error
 3. capture the currently loaded packages
-4. retrieve a small number of matching teaching exemplars when the selected code or plan goal clearly matches a known pattern
+4. retrieve a small number of matching teaching exemplars when the selected code, plan goal, or observed debug error clearly matches a known pattern
 5. build a short teaching prompt
 6. send that prompt to Gemini with `ellmer`
 7. print the reply in the console
