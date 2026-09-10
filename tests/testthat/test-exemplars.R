@@ -68,6 +68,17 @@ test_that("retrieval stays empty when only packages are supplied", {
   expect_identical(nrow(out), 0L)
 })
 
+test_that("short terms do not match inside unrelated words", {
+  out <- teachr_find_exemplars(
+    mode = "hint",
+    selection = "names(penguins_clean)",
+    recent_error = "",
+    packages = "dplyr"
+  )
+
+  expect_identical(nrow(out), 0L)
+})
+
 test_that("run mode includes retrieved exemplars in the built prompt", {
   local_mocked_bindings(
     teachr_chat = function(prompt, system_prompt, model, api_key) {

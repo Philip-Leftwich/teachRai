@@ -160,7 +160,7 @@ teachr_find_exemplars <- function(mode,
 
     term_matches[[i]] <- sum(vapply(
       terms,
-      function(term) nzchar(term) && grepl(term, query_text, fixed = TRUE),
+      function(term) teachr_term_detect(term, query_text),
       logical(1)
     ))
 
@@ -180,7 +180,7 @@ teachr_find_exemplars <- function(mode,
   pool$term_matches <- term_matches
   pool$package_matches <- package_matches
   pool$error_matches <- error_matches
-  pool$score <- term_matches + (error_matches * 3L)
+  pool$score <- term_matches + package_matches + (error_matches * 3L)
 
   keep <- pool$term_matches > 0 | pool$error_matches > 0
 
@@ -270,4 +270,15 @@ teachr_normalise_text <- function(x) {
   text <- gsub("[^a-z0-9_ ]+", " ", text)
   text <- gsub("\\s+", " ", text)
   trimws(text)
+}
+
+teachr_term_detect <- function(term, text) {
+  term <- teachr_normalise_text(term)
+
+  if (!nzchar(term) || !nzchar(text)) {
+    return(FALSE)
+  }
+
+  pattern <- paste0("(^| )", gsub("([][{}()+*^$|\\\\.?])", "\\\\\\1", term), "( |$)")
+  grepl(pattern, text, perl = TRUE)
 }
