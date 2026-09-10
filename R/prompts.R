@@ -59,7 +59,8 @@ teachr_build_prompt <- function(
   goal_text = NULL,
   data_columns = NULL,
   object_names = NULL,
-  packages_loaded = NULL
+  packages_loaded = NULL,
+  exemplars = NULL
 ) {
   mode <- teachr_match_mode(mode)
 
@@ -83,6 +84,12 @@ teachr_build_prompt <- function(
 
     if (!is.null(packages_loaded) && length(packages_loaded) > 0) {
       lines <- c(lines, "", "Loaded packages:", paste(packages_loaded, collapse = ", "))
+    }
+
+    exemplar_lines <- teachr_format_exemplars(exemplars, mode = mode)
+
+    if (length(exemplar_lines) > 0) {
+      lines <- c(lines, "", exemplar_lines)
     }
 
     return(teachr_compact_lines(lines))
@@ -120,6 +127,12 @@ teachr_build_prompt <- function(
     "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
     "5) Suggest short, readable code chunks and use |> where possible."
   )
+
+  exemplar_lines <- teachr_format_exemplars(exemplars, mode = mode)
+
+  if (length(exemplar_lines) > 0) {
+    base_lines <- c(base_lines, "", exemplar_lines)
+  }
 
   teachr_compact_lines(base_lines)
 }

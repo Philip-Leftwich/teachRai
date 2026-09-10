@@ -12,6 +12,7 @@ context without adding a large interface or complex setup.
 - three teaching modes: explain, hint, and debug
 - a Gemini-first chat wrapper built on `ellmer`
 - a simple RStudio addin entry point
+- a small internal exemplar library for common introductory analytics patterns
 - basic console output rendering
 
 The first release is intentionally small so it stays easy for students and
@@ -70,9 +71,10 @@ teachRai keeps the first workflow deliberately simple:
 1. capture the current code selection in RStudio, if there is one
 2. capture the recent console error
 3. capture the currently loaded packages
-4. build a short teaching prompt
-5. send that prompt to Gemini with `ellmer`
-6. print the reply in the console
+4. retrieve a small number of matching teaching exemplars when the context clearly fits
+5. build a short teaching prompt
+6. send that prompt to Gemini with `ellmer`
+7. print the reply in the console
 
 It does **not** try to capture a whole project, build a Shiny gadget, or run
 arbitrary code on your behalf.

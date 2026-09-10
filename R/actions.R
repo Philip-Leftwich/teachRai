@@ -43,7 +43,17 @@ teachr_run_mode <- function(mode,
                             api_key = Sys.getenv("GEMINI_API_KEY"),
                             quiet = FALSE) {
   context <- context %||% teachr_capture_context()
-  prompt <- teachr_build_prompt(mode = mode, context = context)
+  exemplars <- teachr_find_exemplars(
+    mode = mode,
+    selection = context$selection %||% "",
+    recent_error = context$recent_error %||% "",
+    packages = context$loaded_packages %||% character()
+  )
+  prompt <- teachr_build_prompt(
+    mode = mode,
+    context = context,
+    exemplars = exemplars
+  )
   response <- teachr_chat(
     prompt = prompt,
     system_prompt = teachr_system_prompt(mode),
@@ -58,6 +68,7 @@ teachr_run_mode <- function(mode,
   invisible(list(
     mode = mode,
     context = context,
+    exemplars = exemplars,
     prompt = prompt,
     response = response
   ))

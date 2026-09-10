@@ -8,9 +8,8 @@ Description: A small, student-friendly RStudio addin built on ellmer for
 License: MIT + file LICENSE
 URL: https://github.com/Philip-Leftwich/teachRai
 BugReports: https://github.com/Philip-Leftwich/teachRai/issues
-Imports:
-    ellmer
 Suggests:
+    ellmer,
     rstudioapi,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

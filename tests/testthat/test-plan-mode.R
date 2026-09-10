@@ -34,6 +34,25 @@ test_that("plan prompt includes goal and optional context fields", {
   expect_match(out, "dplyr, ggplot2")
 })
 
+test_that("plan prompt can include matching teaching exemplars", {
+  exemplars <- teachr_find_exemplars(
+    mode = "plan",
+    goal_text = "I want to compare average body mass by species and sex.",
+    packages = "dplyr"
+  )
+
+  out <- teachr_build_prompt(
+    mode = "plan",
+    goal_text = "I want to compare average body mass by species and sex.",
+    packages_loaded = "dplyr",
+    exemplars = exemplars
+  )
+
+  expect_match(out, "Teaching exemplars:")
+  expect_match(out, "Instructor explanation:")
+  expect_match(out, "plan-grouped-comparison")
+})
+
 test_that("plan system prompt includes intent-first constraints", {
   out <- teachr_system_prompt("plan")
 
