@@ -205,55 +205,6 @@ teachr_find_exemplars <- function(mode,
   utils::head(pool, n)
 }
 
-teachr_format_exemplars <- function(exemplars, mode) {
-  mode <- teachr_match_mode(mode)
-
-  if (is.null(exemplars) || !nrow(exemplars)) {
-    return(character())
-  }
-
-  entries <- vapply(
-    seq_len(nrow(exemplars)),
-    function(i) {
-      teachr_format_exemplar_entry(exemplars[i, , drop = FALSE], mode = mode)
-    },
-    character(1)
-  )
-
-  c(
-    "Teaching exemplars:",
-    "Use these exemplars only to align terminology and approach.",
-    "Do not claim that the exemplar code or data belongs to the student.",
-    unlist(strsplit(entries, "\n", fixed = TRUE), use.names = FALSE)
-  )
-}
-
-teachr_format_exemplar_entry <- function(exemplar, mode) {
-  lines <- c(
-    paste0("Exemplar ID: ", exemplar$id[[1]]),
-    paste0("Mode: ", teachr_title_case(exemplar$mode[[1]])),
-    paste0("Topic: ", exemplar$topic[[1]]),
-    paste0("Student question: ", exemplar$student_question[[1]]),
-    paste0("Likely misconception: ", exemplar$likely_misconception[[1]]),
-    paste0("Instructor hint: ", exemplar$instructor_hint[[1]])
-  )
-
-  if (mode != "hint") {
-    lines <- c(
-      lines,
-      paste0("Instructor explanation: ", exemplar$instructor_explanation[[1]])
-    )
-  }
-
-  lines <- c(
-    lines,
-    paste0("Tags: ", exemplar$tags[[1]]),
-    paste0("Provenance: ", exemplar$source_path[[1]])
-  )
-
-  teachr_compact_lines(lines)
-}
-
 teachr_split_csv <- function(x) {
   x <- x %||% character()
   x <- trimws(x)

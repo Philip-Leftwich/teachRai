@@ -67,7 +67,7 @@ teachr_run_mode <- function(mode,
       goal_text = goal_text,
       data_columns = data_columns,
       object_names = object_names,
-      loaded_packages = packages_loaded
+      packages_loaded = packages_loaded
     )
   } else {
     context <- context %||% teachr_capture_context()

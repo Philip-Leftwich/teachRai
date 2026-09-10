@@ -139,6 +139,6 @@ test_that("plan run mode retrieves exemplars from the goal text", {
   expect_true(nrow(out$exemplars) >= 1)
   expect_identical(out$exemplars$id[[1]], "plan-grouped-comparison")
   expect_identical(out$context$goal_text, "I want to compare average body mass by species and sex.")
-  expect_identical(out$context$loaded_packages, "dplyr")
+  expect_identical(out$context$packages_loaded, "dplyr")
   expect_match(out$prompt, "Teaching exemplars:")
 })
