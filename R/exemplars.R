@@ -184,7 +184,7 @@ teachr_find_exemplars <- function(mode,
 
   keep <- pool$term_matches > 0 | pool$error_matches > 0
 
-  if (!any(keep) && nzchar(context_text)) {
+  if (!any(keep) && identical(mode, "plan") && nzchar(trimws(goal_text %||% ""))) {
     keep <- pool$package_matches > 0
   }
 

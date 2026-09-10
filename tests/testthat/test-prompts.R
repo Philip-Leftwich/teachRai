@@ -61,6 +61,29 @@ test_that("hint exemplar formatting stays conservative", {
   expect_no_match(out, "Instructor explanation:")
 })
 
+test_that("debug exemplar formatting includes explanation text", {
+  exemplars <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "penguins_clean |> filter(Species == \"Adelie\")",
+    recent_error = "Error in filter(): object 'Species' not found",
+    packages = c("dplyr", "janitor")
+  )
+
+  out <- teachr_build_prompt(
+    mode = "debug",
+    context = list(
+      selection = "penguins_clean |> filter(Species == \"Adelie\")",
+      recent_error = "Error in filter(): object 'Species' not found",
+      loaded_packages = c("dplyr", "janitor")
+    ),
+    exemplars = exemplars
+  )
+
+  expect_match(out, "Teaching exemplars:")
+  expect_match(out, "Instructor hint:")
+  expect_match(out, "Instructor explanation:")
+})
+
 test_that("system prompts keep anti-hallucination rules", {
   explain_sys <- teachr_system_prompt("explain")
   hint_sys <- teachr_system_prompt("hint")

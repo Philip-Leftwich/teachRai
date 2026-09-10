@@ -46,15 +46,15 @@ test_that("retrieval uses error patterns for debug mode", {
 
 test_that("retrieval can fall back to exact package matches", {
   out <- teachr_find_exemplars(
-    mode = "explain",
-    selection = "help please",
+    mode = "plan",
+    goal_text = "I am not sure where to start.",
     recent_error = "",
-    packages = "  GGPLOT2 "
+    packages = c(" dplyr ", "TIDYR")
   )
 
   expect_true(nrow(out) >= 1)
-  expect_identical(out$id[[1]], "explain-ggplot-aesthetics")
-  expect_identical(out$package_matches[[1]], 1L)
+  expect_identical(out$id[[1]], "plan-join-and-reshape")
+  expect_identical(out$package_matches[[1]], 2L)
 })
 
 test_that("retrieval stays empty when only packages are supplied", {
