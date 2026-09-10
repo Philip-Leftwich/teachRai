@@ -161,7 +161,7 @@ teachr_find_exemplars <- function(mode,
 
   for (i in seq_len(nrow(pool))) {
     terms <- teachr_split_csv(pool$match_terms[[i]])
-    exemplar_packages <- teachr_split_csv(pool$packages[[i]])
+    exemplar_packages <- tolower(teachr_split_csv(pool$packages[[i]]))
     pattern <- pool$error_pattern[[i]]
 
     term_matches[[i]] <- sum(vapply(

@@ -37,6 +37,20 @@ test_that("prompt leaves exemplar section out when nothing matches", {
   expect_no_match(out, "Teaching exemplars:")
 })
 
+test_that("prompt ignores non-data-frame exemplar input", {
+  out <- teachr_build_prompt(
+    mode = "explain",
+    context = list(
+      selection = "x <- 1 + 1",
+      recent_error = "",
+      loaded_packages = character()
+    ),
+    exemplars = list(id = "not-a-data-frame")
+  )
+
+  expect_no_match(out, "Teaching exemplars:")
+})
+
 test_that("prompt can format supplied exemplar rows directly", {
   exemplar <- teachRai:::teachr_exemplars[
     teachRai:::teachr_exemplars$mode == "hint",

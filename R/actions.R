@@ -49,32 +49,27 @@ teachr_run_mode <- function(mode,
   mode <- teachr_match_mode(mode)
 
   if (identical(mode, "plan")) {
-    plan_context <- context %||% list()
-    plan_context$packages_loaded <- plan_context$packages_loaded %||% plan_context$loaded_packages
-    goal_text <- goal_text %||% plan_context$goal_text
-    data_columns <- data_columns %||% plan_context$data_columns
-    object_names <- object_names %||% plan_context$object_names
-    packages_loaded <- packages_loaded %||% plan_context$packages_loaded %||% character()
+    context <- context %||% list()
+    context$packages_loaded <- context$packages_loaded %||% context$loaded_packages
+    context$goal_text <- goal_text %||% context$goal_text
+    context$data_columns <- data_columns %||% context$data_columns
+    context$object_names <- object_names %||% context$object_names
+    context$packages_loaded <- packages_loaded %||% context$packages_loaded %||% character()
 
     exemplars <- teachr_find_exemplars(
       mode = mode,
-      goal_text = goal_text %||% "",
-      packages = packages_loaded
+      goal_text = context$goal_text %||% "",
+      packages = context$packages_loaded
     )
     prompt <- teachr_build_prompt(
       mode = mode,
-      goal_text = goal_text,
-      data_columns = data_columns,
-      object_names = object_names,
-      packages_loaded = packages_loaded,
+      goal_text = context$goal_text,
+      data_columns = context$data_columns,
+      object_names = context$object_names,
+      packages_loaded = context$packages_loaded,
       exemplars = exemplars
     )
-    captured_context <- list(
-      goal_text = goal_text,
-      data_columns = data_columns,
-      object_names = object_names,
-      packages_loaded = packages_loaded
-    )
+    captured_context <- context
   } else {
     context <- context %||% teachr_capture_context()
     exemplars <- teachr_find_exemplars(

@@ -140,7 +140,7 @@ teachr_build_prompt <- function(
 teachr_format_exemplars <- function(exemplars, mode) {
   mode <- teachr_match_mode(mode)
 
-  if (is.null(exemplars) || !nrow(exemplars)) {
+  if (!is.data.frame(exemplars) || !nrow(exemplars)) {
     return(character())
   }
 
