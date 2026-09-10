@@ -180,7 +180,7 @@ teachr_find_exemplars <- function(mode,
   pool$term_matches <- term_matches
   pool$package_matches <- package_matches
   pool$error_matches <- error_matches
-  pool$score <- term_matches + package_matches + (error_matches * 3L)
+  pool$score <- term_matches + (error_matches * 3L)
 
   keep <- pool$term_matches > 0 | pool$error_matches > 0
 
@@ -251,13 +251,17 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
 }
 
 teachr_split_csv <- function(x) {
-  x <- trimws(x %||% "")
+  x <- x %||% character()
+  x <- trimws(x)
+  x <- x[nzchar(x)]
 
-  if (!nzchar(x)) {
+  if (!length(x)) {
     return(character())
   }
 
-  trimws(strsplit(x, ",", fixed = TRUE)[[1]])
+  values <- unlist(strsplit(x, ",", fixed = TRUE), use.names = FALSE)
+  values <- trimws(values)
+  values[nzchar(values)]
 }
 
 teachr_normalise_text <- function(x) {
