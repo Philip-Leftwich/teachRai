@@ -145,3 +145,25 @@ test_that("plan run mode retrieves exemplars from the goal text", {
   expect_identical(out$context$packages_loaded, "dplyr")
   expect_match(out$prompt, "Teaching exemplars:")
 })
+
+test_that("plan run mode also accepts loaded_packages in context", {
+  local_mocked_bindings(
+    teachr_chat = function(prompt, system_prompt, model, api_key) {
+      list(prompt = prompt, system_prompt = system_prompt)
+    }
+  )
+
+  out <- teachr_run_mode(
+    mode = "plan",
+    context = list(
+      goal_text = "I want to join a lookup table and pivot the result longer.",
+      loaded_packages = c("dplyr", "tidyr")
+    ),
+    api_key = "test-key",
+    quiet = TRUE
+  )
+
+  expect_true(nrow(out$exemplars) >= 1)
+  expect_identical(out$context$packages_loaded, c("dplyr", "tidyr"))
+  expect_identical(out$exemplars$id[[1]], "plan-join-and-reshape")
+})

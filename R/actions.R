@@ -50,13 +50,11 @@ teachr_run_mode <- function(mode,
 
   if (identical(mode, "plan")) {
     plan_context <- context %||% list()
+    plan_context$packages_loaded <- plan_context$packages_loaded %||% plan_context$loaded_packages
     goal_text <- goal_text %||% plan_context$goal_text
     data_columns <- data_columns %||% plan_context$data_columns
     object_names <- object_names %||% plan_context$object_names
-    packages_loaded <- packages_loaded %||%
-      plan_context$packages_loaded %||%
-      plan_context$loaded_packages %||%
-      character()
+    packages_loaded <- packages_loaded %||% plan_context$packages_loaded %||% character()
 
     exemplars <- teachr_find_exemplars(
       mode = mode,
