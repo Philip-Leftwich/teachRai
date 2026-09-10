@@ -47,7 +47,7 @@ test_that("retrieval uses error patterns for debug mode", {
 test_that("retrieval can fall back to exact package matches", {
   out <- teachr_find_exemplars(
     mode = "explain",
-    selection = "",
+    selection = "help please",
     recent_error = "",
     packages = "  GGPLOT2 "
   )
@@ -55,6 +55,17 @@ test_that("retrieval can fall back to exact package matches", {
   expect_true(nrow(out) >= 1)
   expect_identical(out$id[[1]], "explain-ggplot-aesthetics")
   expect_identical(out$package_matches[[1]], 1L)
+})
+
+test_that("retrieval stays empty when only packages are supplied", {
+  out <- teachr_find_exemplars(
+    mode = "explain",
+    selection = "",
+    recent_error = "",
+    packages = "dplyr"
+  )
+
+  expect_identical(nrow(out), 0L)
 })
 
 test_that("run mode includes retrieved exemplars in the built prompt", {

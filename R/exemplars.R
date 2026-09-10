@@ -140,11 +140,12 @@ teachr_find_exemplars <- function(mode,
 
   packages <- packages %||% character()
   packages <- trimws(tolower(packages[nzchar(packages)]))
-  query_text <- teachr_normalise_text(c(selection, recent_error, goal_text, packages))
+  context_text <- teachr_normalise_text(c(selection, recent_error, goal_text))
+  query_text <- context_text
   package_tokens <- unique(packages)
   error_text <- teachr_normalise_text(recent_error)
 
-  if (!nzchar(query_text) && !nzchar(error_text) && !length(package_tokens)) {
+  if (!nzchar(context_text) && !nzchar(error_text) && !length(package_tokens)) {
     return(pool[0, , drop = FALSE])
   }
 
@@ -183,7 +184,7 @@ teachr_find_exemplars <- function(mode,
 
   keep <- pool$term_matches > 0 | pool$error_matches > 0
 
-  if (!any(keep)) {
+  if (!any(keep) && nzchar(context_text)) {
     keep <- pool$package_matches > 0
   }
 
