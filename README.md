@@ -78,3 +78,8 @@ teachRai keeps the first workflow deliberately simple:
 
 It does **not** try to capture a whole project, build a Shiny gadget, or run
 arbitrary code on your behalf.
+
+Internally, prompt building can also carry retrieved exemplar metadata. The
+invisible result from `teachr_run_mode()` now includes any retrieved
+`exemplars`, and plan-mode calls can supply `goal_text` plus
+`packages_loaded` when building a plan prompt.

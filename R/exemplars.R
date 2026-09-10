@@ -182,7 +182,11 @@ teachr_find_exemplars <- function(mode,
   pool$error_matches <- error_matches
   pool$score <- term_matches + package_matches + (error_matches * 3L)
 
-  keep <- pool$term_matches > 0 | pool$error_matches > 0
+  keep <- pool$term_matches > 0
+
+  if (identical(mode, "debug")) {
+    keep <- keep | pool$error_matches > 0
+  }
 
   if (!any(keep)) {
     return(pool[0, , drop = FALSE])
@@ -229,8 +233,6 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
     paste0("Topic: ", exemplar$topic[[1]]),
     paste0("Student question: ", exemplar$student_question[[1]]),
     paste0("Likely misconception: ", exemplar$likely_misconception[[1]]),
-    "Student code:",
-    exemplar$student_code[[1]],
     paste0("Instructor hint: ", exemplar$instructor_hint[[1]])
   )
 
@@ -273,12 +275,32 @@ teachr_normalise_text <- function(x) {
 }
 
 teachr_term_detect <- function(term, text) {
-  term <- teachr_normalise_text(term)
+  term <- teachr_split_words(term)
+  text <- teachr_split_words(text)
 
-  if (!nzchar(term) || !nzchar(text)) {
+  if (!length(term) || !length(text) || length(term) > length(text)) {
     return(FALSE)
   }
 
-  pattern <- paste0("(^| )", gsub("([][{}()+*^$|\\\\.?])", "\\\\\\1", term), "( |$)")
-  grepl(pattern, text, perl = TRUE)
+  if (length(term) == 1) {
+    return(term %in% text)
+  }
+
+  windows <- seq_len(length(text) - length(term) + 1L)
+
+  any(vapply(
+    windows,
+    function(i) identical(text[i:(i + length(term) - 1L)], term),
+    logical(1)
+  ))
+}
+
+teachr_split_words <- function(x) {
+  x <- teachr_normalise_text(x)
+
+  if (!nzchar(x)) {
+    return(character())
+  }
+
+  strsplit(x, " ", fixed = TRUE)[[1]]
 }
