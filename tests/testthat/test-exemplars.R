@@ -68,3 +68,23 @@ test_that("run mode includes retrieved exemplars in the built prompt", {
   expect_match(out$prompt, "Teaching exemplars:")
   expect_match(out$prompt, "hint-filter-missing-values")
 })
+
+test_that("plan run mode retrieves exemplars from the goal text", {
+  local_mocked_bindings(
+    teachr_chat = function(prompt, system_prompt, model, api_key) {
+      list(prompt = prompt, system_prompt = system_prompt)
+    }
+  )
+
+  out <- teachr_run_mode(
+    mode = "plan",
+    goal_text = "I want to compare average body mass by species and sex.",
+    packages_loaded = "dplyr",
+    api_key = "test-key",
+    quiet = TRUE
+  )
+
+  expect_true(nrow(out$exemplars) >= 1)
+  expect_identical(out$exemplars$id[[1]], "plan-grouped-comparison")
+  expect_match(out$prompt, "Teaching exemplars:")
+})
