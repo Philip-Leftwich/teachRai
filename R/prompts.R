@@ -167,6 +167,7 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
     paste0("Topic: ", exemplar$topic[[1]]),
     paste0("Student question: ", exemplar$student_question[[1]]),
     paste0("Likely misconception: ", exemplar$likely_misconception[[1]]),
+    paste0("Student code pattern: ", teachr_inline_text(exemplar$student_code[[1]])),
     paste0("Instructor hint: ", exemplar$instructor_hint[[1]])
   )
 
@@ -184,6 +185,11 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
   )
 
   teachr_compact_lines(lines)
+}
+
+teachr_inline_text <- function(x) {
+  x <- gsub("\\s+", " ", x %||% "")
+  trimws(x)
 }
 
 teachr_check_style <- function(text) {

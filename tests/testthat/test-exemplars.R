@@ -131,8 +131,10 @@ test_that("plan run mode retrieves exemplars from the goal text", {
 
   out <- teachr_run_mode(
     mode = "plan",
-    goal_text = "I want to compare average body mass by species and sex.",
-    packages_loaded = "dplyr",
+    context = list(
+      goal_text = "I want to compare average body mass by species and sex.",
+      packages_loaded = "dplyr"
+    ),
     api_key = "test-key",
     quiet = TRUE
   )
