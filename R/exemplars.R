@@ -140,10 +140,10 @@ teachr_find_exemplars <- function(mode,
 
   packages <- packages %||% character()
   query_text <- teachr_normalise_text(c(selection, recent_error, goal_text, packages))
-  package_text <- tolower(paste(packages, collapse = ","))
+  package_tokens <- unique(tolower(packages[nzchar(packages)]))
   error_text <- teachr_normalise_text(recent_error)
 
-  if (!nzchar(query_text) && !nzchar(error_text) && !nzchar(package_text)) {
+  if (!nzchar(query_text) && !nzchar(error_text) && !length(package_tokens)) {
     return(pool[0, , drop = FALSE])
   }
 
@@ -162,11 +162,7 @@ teachr_find_exemplars <- function(mode,
       logical(1)
     ))
 
-    package_matches[[i]] <- sum(vapply(
-      exemplar_packages,
-      function(pkg) nzchar(pkg) && grepl(pkg, package_text, fixed = TRUE),
-      logical(1)
-    ))
+    package_matches[[i]] <- sum(exemplar_packages %in% package_tokens)
 
     error_matches[[i]] <- if (
       nzchar(pattern) &&
@@ -185,6 +181,10 @@ teachr_find_exemplars <- function(mode,
   pool$score <- term_matches + package_matches + (error_matches * 3L)
 
   keep <- pool$term_matches > 0 | pool$error_matches > 0
+
+  if (!any(keep)) {
+    keep <- pool$package_matches > 0
+  }
 
   if (!any(keep)) {
     return(pool[0, , drop = FALSE])

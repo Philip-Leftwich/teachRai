@@ -44,6 +44,19 @@ test_that("retrieval uses error patterns for debug mode", {
   expect_identical(out$error_matches[[1]], 1L)
 })
 
+test_that("retrieval can fall back to exact package matches", {
+  out <- teachr_find_exemplars(
+    mode = "explain",
+    selection = "",
+    recent_error = "",
+    packages = "ggplot2"
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "explain-ggplot-aesthetics")
+  expect_identical(out$package_matches[[1]], 1L)
+})
+
 test_that("run mode includes retrieved exemplars in the built prompt", {
   local_mocked_bindings(
     teachr_chat = function(prompt, system_prompt, model, api_key) {
