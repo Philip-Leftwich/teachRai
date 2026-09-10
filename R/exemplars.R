@@ -267,7 +267,7 @@ teachr_split_csv <- function(x) {
 teachr_normalise_text <- function(x) {
   x <- x %||% character()
   text <- tolower(paste(x, collapse = " "))
-  text <- gsub("[^a-z0-9_ ]+", " ", text)
+  text <- gsub("[^a-z0-9_. ]+", " ", text)
   text <- gsub("\\s+", " ", text)
   trimws(text)
 }

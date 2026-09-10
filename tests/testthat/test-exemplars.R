@@ -21,7 +21,10 @@ test_that("exemplar library has the expected structure", {
 test_that("retrieval prefers topical matches for hint mode", {
   out <- teachr_find_exemplars(
     mode = "hint",
-    selection = "penguins_clean_names |> group_by(species) |> summarise(mean_body_mass = mean(body_mass_g))",
+    selection = paste(
+      "penguins_clean_names |> group_by(species) |> summarise(mean_body_mass = mean(body_mass_g))",
+      "# missing values make the mean come back as NA"
+    ),
     recent_error = "",
     packages = "dplyr"
   )
@@ -87,7 +90,10 @@ test_that("run mode includes retrieved exemplars in the built prompt", {
   )
 
   context <- list(
-    selection = "penguins_clean_names |> group_by(species) |> summarise(mean_body_mass = mean(body_mass_g))",
+    selection = paste(
+      "penguins_clean_names |> group_by(species) |> summarise(mean_body_mass = mean(body_mass_g))",
+      "# missing values make the mean come back as NA"
+    ),
     recent_error = "",
     loaded_packages = "dplyr"
   )
