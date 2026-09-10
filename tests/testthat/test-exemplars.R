@@ -49,7 +49,7 @@ test_that("retrieval can fall back to exact package matches", {
     mode = "explain",
     selection = "",
     recent_error = "",
-    packages = "ggplot2"
+    packages = "  GGPLOT2 "
   )
 
   expect_true(nrow(out) >= 1)
@@ -99,5 +99,7 @@ test_that("plan run mode retrieves exemplars from the goal text", {
 
   expect_true(nrow(out$exemplars) >= 1)
   expect_identical(out$exemplars$id[[1]], "plan-grouped-comparison")
+  expect_identical(out$context$goal_text, "I want to compare average body mass by species and sex.")
+  expect_identical(out$context$loaded_packages, "dplyr")
   expect_match(out$prompt, "Teaching exemplars:")
 })

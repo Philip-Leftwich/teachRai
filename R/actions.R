@@ -63,7 +63,12 @@ teachr_run_mode <- function(mode,
       packages_loaded = packages_loaded,
       exemplars = exemplars
     )
-    captured_context <- context
+    captured_context <- list(
+      goal_text = goal_text,
+      data_columns = data_columns,
+      object_names = object_names,
+      loaded_packages = packages_loaded
+    )
   } else {
     context <- context %||% teachr_capture_context()
     exemplars <- teachr_find_exemplars(

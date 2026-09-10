@@ -139,8 +139,9 @@ teachr_find_exemplars <- function(mode,
   }
 
   packages <- packages %||% character()
+  packages <- trimws(tolower(packages[nzchar(packages)]))
   query_text <- teachr_normalise_text(c(selection, recent_error, goal_text, packages))
-  package_tokens <- unique(tolower(packages[nzchar(packages)]))
+  package_tokens <- unique(packages)
   error_text <- teachr_normalise_text(recent_error)
 
   if (!nzchar(query_text) && !nzchar(error_text) && !length(package_tokens)) {
