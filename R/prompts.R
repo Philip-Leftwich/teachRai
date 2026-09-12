@@ -11,7 +11,7 @@ teachr_system_prompt <- function(mode) {
       "Prefer short, clean, and well-organised code chunks that are easy to read.",
       "When suggesting code, use the native pipe operator |>, where possible.",
       "Hard rule: if code selection is EMPTY, do not infer code intent, bugs, or runtime issues.",
-      "Hard rule: if observed error state is NONE, do not mention any error, warning, or problem.",
+      "Explain what the code does; do not diagnose, mention, or speculate about errors.",
       "When information is missing, say exactly what is missing and ask for the smallest useful next input.",
       "Prefer short paragraphs and plain language."
     ),
@@ -23,6 +23,7 @@ teachr_system_prompt <- function(mode) {
       "Prefer short, clean, and well-organised code chunks that are easy to read.",
       "When suggesting code, use the native pipe operator |>, where possible.",
       "Hard rule: if observed error state is NONE, do not infer or invent any error/problem.",
+      "Hard rule: if observed error state is UNCERTAIN, say so before using the error, since it may not relate to the current selection.",
       "Hard rule: if code selection is EMPTY, give a process hint only (what to run/share next), not a code diagnosis.",
       "Use only supplied context. Never speculate beyond it.",
       "Nudge the student towards one concrete next step."
@@ -103,38 +104,58 @@ teachr_build_prompt <- function(
   packages <- context$loaded_packages %||% character()
   packages_text <- if (length(packages) == 0) "NONE" else paste(packages, collapse = ", ")
 
-  recent_error <- context$recent_error %||% ""
-  error_state_raw <- teachr_error_state(context)
-  error_state <- switch(
-    error_state_raw,
-    absent = "NONE",
-    present = "PRESENT",
-    uncertain = "UNCERTAIN"
-  )
-  recent_error_text <- if (identical(error_state_raw, "absent")) "NONE" else recent_error
-
   base_lines <- c(
     paste("Mode:", teachr_title_case(mode)),
     "",
     paste("Code selection state:", selection_state),
     "Current code selection:",
     selection_text,
-    "",
-    paste("Observed error state:", error_state),
-    "Observed error text:",
-    recent_error_text,
-    "",
-    "Loaded packages:",
-    packages_text,
-    "",
-    "Response rules:",
-    "1) If observed error state is NONE, do not mention any specific error/problem.",
-    "1a) If observed error state is UNCERTAIN, mention explicitly that the error text may be unrelated to the current selection before using it.",
-    "2) If code selection state is EMPTY, do not infer what the code does.",
-    "3) Ask for exactly one concrete next step.",
-    "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
-    "5) Suggest short, readable code chunks and use |> where possible."
+    ""
   )
+
+  if (identical(mode, "explain")) {
+    # Explain mode never reads or reports the observed error - it explains
+    # code, full stop - so no error section is built for it at all.
+    base_lines <- c(
+      base_lines,
+      "Loaded packages:",
+      packages_text,
+      "",
+      "Response rules:",
+      "1) If code selection state is EMPTY, do not infer what the code does.",
+      "2) Ask for exactly one concrete next step.",
+      "3) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
+      "4) Suggest short, readable code chunks and use |> where possible."
+    )
+  } else {
+    recent_error <- context$recent_error %||% ""
+    error_state_raw <- teachr_error_state(context)
+    error_state <- switch(
+      error_state_raw,
+      absent = "NONE",
+      present = "PRESENT",
+      uncertain = "UNCERTAIN"
+    )
+    recent_error_text <- if (identical(error_state_raw, "absent")) "NONE" else recent_error
+
+    base_lines <- c(
+      base_lines,
+      paste("Observed error state:", error_state),
+      "Observed error text:",
+      recent_error_text,
+      "",
+      "Loaded packages:",
+      packages_text,
+      "",
+      "Response rules:",
+      "1) If observed error state is NONE, do not mention any specific error/problem.",
+      "1a) If observed error state is UNCERTAIN, mention explicitly that the error text may be unrelated to the current selection before using it.",
+      "2) If code selection state is EMPTY, do not infer what the code does.",
+      "3) Ask for exactly one concrete next step.",
+      "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
+      "5) Suggest short, readable code chunks and use |> where possible."
+    )
+  }
 
   exemplar_lines <- teachr_format_exemplars(exemplars, mode = mode)
 

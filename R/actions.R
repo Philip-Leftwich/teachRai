@@ -57,11 +57,15 @@ teachr_run_mode <- function(mode,
 
   if (identical(mode, "plan")) {
     context <- context %||% list()
+    context$selection <- context$selection %||% teachr_current_selection()
+    auto_goal <- teachr_extract_goal_from_comment(context$selection)
+
     context$packages_loaded <- context$packages_loaded %||% context$loaded_packages
-    context$goal_text <- goal_text %||% context$goal_text
+    context$goal_text <- goal_text %||% context$goal_text %||%
+      (if (nzchar(auto_goal)) auto_goal else NULL)
     context$data_columns <- data_columns %||% context$data_columns
     context$object_names <- object_names %||% context$object_names
-    context$packages_loaded <- packages_loaded %||% context$packages_loaded %||% character()
+    context$packages_loaded <- packages_loaded %||% context$packages_loaded %||% teachr_loaded_packages()
 
     exemplars <- teachr_find_exemplars(
       mode = mode,
@@ -78,7 +82,7 @@ teachr_run_mode <- function(mode,
     )
     captured_context <- context
   } else {
-    context <- context %||% teachr_capture_context()
+    context <- context %||% teachr_capture_context(mode)
     exemplars <- teachr_find_exemplars(
       mode = mode,
       selection = context$selection %||% "",

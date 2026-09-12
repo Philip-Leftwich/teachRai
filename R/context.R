@@ -1,6 +1,12 @@
-teachr_capture_context <- function() {
-  recent_error <- teachr_recent_error()
-  teachr_clear_recent_error()
+teachr_capture_context <- function(mode = NULL) {
+  if (identical(mode, "explain")) {
+    # Explain mode never reads or reports errors, so it must not consume the
+    # session's error buffer either - a later hint/debug call still needs it.
+    recent_error <- ""
+  } else {
+    recent_error <- teachr_recent_error()
+    teachr_clear_recent_error()
+  }
 
   list(
     selection = teachr_current_selection(),
@@ -47,4 +53,19 @@ teachr_loaded_packages <- function() {
     grep(pattern = "^package:", value = TRUE)
 
   sub("^package:", "", packages)
+}
+
+teachr_extract_goal_from_comment <- function(selection) {
+  lines <- strsplit(selection %||% "", "\n", fixed = TRUE)[[1]]
+  lines <- trimws(lines)
+  lines <- lines[nzchar(lines)]
+
+  if (!length(lines) || !all(grepl("^#", lines))) {
+    return("")
+  }
+
+  goal_lines <- trimws(sub("^#+\\s*", "", lines))
+  goal_lines <- goal_lines[nzchar(goal_lines)]
+
+  paste(goal_lines, collapse = " ")
 }

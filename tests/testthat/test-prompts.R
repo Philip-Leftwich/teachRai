@@ -1,4 +1,4 @@
-test_that("non-plan prompts include context states and response rules", {
+test_that("explain prompts include context states and response rules but no error section", {
   context <- list(
     selection = "penguins |> summarise(mean_mass = mean(body_mass_g))",
     recent_error = "",
@@ -8,6 +8,38 @@ test_that("non-plan prompts include context states and response rules", {
   out <- teachr_build_prompt(mode = "explain", context = context)
 
   expect_match(out, "Mode: Explain")
+  expect_match(out, "Code selection state: PRESENT")
+  expect_no_match(out, "Observed error state:")
+  expect_no_match(out, "Observed error text:")
+  expect_match(out, "Loaded packages:")
+  expect_match(out, "dplyr, ggplot2")
+  expect_match(out, "Response rules:")
+  expect_match(out, "Prefer tidyverse over base R")
+})
+
+test_that("explain prompts ignore a supplied recent_error entirely", {
+  context <- list(
+    selection = "penguins |> summarise(mean_mass = mean(body_mass_g))",
+    recent_error = "Error in foo(): object 'bar' not found",
+    loaded_packages = c("dplyr")
+  )
+
+  out <- teachr_build_prompt(mode = "explain", context = context)
+
+  expect_no_match(out, "Observed error")
+  expect_no_match(out, "bar")
+})
+
+test_that("non-plan prompts other than explain include an error state section", {
+  context <- list(
+    selection = "penguins |> summarise(mean_mass = mean(body_mass_g))",
+    recent_error = "",
+    loaded_packages = c("dplyr", "ggplot2")
+  )
+
+  out <- teachr_build_prompt(mode = "hint", context = context)
+
+  expect_match(out, "Mode: Hint")
   expect_match(out, "Code selection state: PRESENT")
   expect_match(out, "Observed error state: NONE")
   expect_match(out, "Loaded packages:")
@@ -143,10 +175,12 @@ test_that("system prompts keep anti-hallucination rules", {
   debug_sys <- teachr_system_prompt("debug")
 
   expect_match(explain_sys, "Hard rule: if code selection is EMPTY")
-  expect_match(explain_sys, "Hard rule: if observed error state is NONE")
+  expect_match(explain_sys, "do not diagnose, mention, or speculate about errors")
+  expect_no_match(explain_sys, "observed error state")
 
   expect_match(hint_sys, "without solving everything")
   expect_match(hint_sys, "Never speculate beyond it")
+  expect_match(hint_sys, "UNCERTAIN")
 
   expect_match(debug_sys, "Use only the observed error text when supplied")
   expect_match(debug_sys, "Do not invent error messages, warnings, or causes")

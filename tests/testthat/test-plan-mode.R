@@ -53,6 +53,32 @@ test_that("plan prompt can include matching teaching exemplars", {
   expect_match(out, "plan-grouped-comparison")
 })
 
+test_that("plan run mode auto-derives goal_text from a highlighted comment", {
+  local_mocked_bindings(
+    teachr_current_selection = function() "# compare average body mass by species and sex",
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
+      list(prompt = prompt, system_prompt = system_prompt)
+    }
+  )
+
+  out <- teachr_run_mode(mode = "plan", api_key = "test-key", quiet = TRUE)
+
+  expect_identical(out$context$goal_text, "compare average body mass by species and sex")
+  expect_match(out$prompt, "Student goal:")
+  expect_match(out$prompt, "compare average body mass by species and sex")
+})
+
+test_that("plan run mode does not treat a highlighted code selection as a goal", {
+  local_mocked_bindings(
+    teachr_current_selection = function() "penguins |> group_by(species)"
+  )
+
+  expect_error(
+    teachr_run_mode(mode = "plan", api_key = "test-key", quiet = TRUE),
+    "`goal_text` must be provided and non-empty for `plan` mode\\."
+  )
+})
+
 test_that("plan system prompt includes intent-first constraints", {
   out <- teachr_system_prompt("plan")
 
