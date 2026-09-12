@@ -1,0 +1,251 @@
+exemplars:
+  - id: explain-grouped-summary
+    mode: explain
+    topic: grouped summaries with dplyr
+    student_question: Why does group_by() change what summarise() returns?
+    likely_misconception: Thinking group_by() changes the data values rather than the level at which summaries are calculated.
+    student_code: |-
+      penguins_raw |>
+        group_by(species) |>
+        summarise(mean_flipper = mean(flipper_length_mm, na.rm = TRUE))
+    instructor_hint: Track what each pipe step returns; after group_by() the data is grouped, so summarise() now calculates one result per group.
+    instructor_explanation: group_by() does not alter the values in the tibble. It stores grouping metadata so that summarise() works within each group and can return one row per group instead of one row for the whole dataset.
+    tags: dplyr, group_by, summarise, penguins, tidyverse
+    source_path: Oct-Intro-Analytics/05-dplyr.qmd
+    match_terms: group_by, summarise, summary, grouped, mean, average, species, flipper
+    packages: dplyr
+    error_pattern: ""
+
+  - id: explain-ggplot-aesthetics
+    mode: explain
+    topic: building a layered ggplot
+    student_question: What does aes() do and why are my points not coloured by species?
+    likely_misconception: Thinking aesthetics set outside aes() will map values from the data automatically.
+    student_code: |-
+      penguins_raw |>
+        ggplot(aes(x = species, y = body_mass_g, colour = sex)) +
+        geom_point()
+    instructor_hint: Check which parts belong inside aes() for data-driven mappings, then add the geom as a separate layer.
+    instructor_explanation: ggplot() builds plots layer by layer. Variables that should vary with the data belong inside aes(), while fixed styling choices sit outside aes() as plain arguments to a geom.
+    tags: ggplot2, aes, geom_point, visualisation, tidyverse
+    source_path: Oct-Intro-Analytics/ggplot.qmd
+    match_terms: ggplot, aes, colour, color, points, geom_point, plot, species
+    packages: ggplot2
+    error_pattern: ""
+
+  - id: hint-filter-missing-values
+    mode: hint
+    topic: handling missing values before a summary
+    student_question: Why does my grouped mean come back as NA?
+    likely_misconception: Assuming summary functions ignore missing values by default.
+    student_code: |-
+      penguins_clean_names |>
+        group_by(species) |>
+        summarise(mean_body_mass = mean(body_mass_g))
+    instructor_hint: Look at whether body_mass_g contains missing values and decide whether this summary needs na.rm = TRUE.
+    instructor_explanation: Most summary functions in R do not remove missing values unless you ask them to. When a group contains NA values, mean() returns NA unless you set na.rm = TRUE or remove those rows first.
+    tags: dplyr, summarise, mean, NA, missing-values
+    source_path: Oct-Intro-Analytics/08-missing-values.qmd
+    match_terms: missing, na, mean, summarise, body_mass_g, species, drop_na, na.rm
+    packages: dplyr
+    error_pattern: ""
+
+  - id: hint-mutate-case-when
+    mode: hint
+    topic: creating a new grouped label with mutate
+    student_question: How do I turn a long species label into a shorter category?
+    likely_misconception: Thinking mutate() edits labels in place without creating or reassigning a column.
+    student_code: |-
+      penguins_clean |>
+        mutate(species = case_when(
+          species == "Adelie Penguin (Pygoscelis adeliae)" ~ "Adelie"
+        ))
+    instructor_hint: Start by deciding whether you want a new column or to overwrite the old one, then write one case_when() condition at a time.
+    instructor_explanation: mutate() creates or replaces columns and returns a new tibble. case_when() is helpful when you want readable conditional recoding with one rule per line.
+    tags: dplyr, mutate, case_when, recode, strings
+    source_path: Oct-Intro-Analytics/R/clean_penguins.R
+    match_terms: mutate, case_when, recode, rename, label, category
+    packages: dplyr
+    error_pattern: ""
+
+  - id: debug-missing-na-rm
+    mode: debug
+    topic: summaries that return missing values
+    student_question: Why does mean(body_mass_g) give me NA inside summarise()?
+    likely_misconception: Assuming the error is in group_by() rather than missing values inside mean().
+    student_code: |-
+      penguins_clean_names |>
+        group_by(species) |>
+        summarise(mean_body_mass = mean(body_mass_g))
+    instructor_hint: Test mean(body_mass_g) on its own with and without na.rm = TRUE before changing the whole pipeline.
+    instructor_explanation: This pattern usually comes from missing values rather than a broken grouped summary. The summary is working, but mean() propagates NA unless you remove missing values for that calculation.
+    tags: dplyr, summarise, mean, na.rm, debugging
+    source_path: Oct-Intro-Analytics/08-missing-values.qmd
+    match_terms: mean, summarise, na, missing, na.rm, body_mass_g, average
+    packages: dplyr
+    error_pattern: missing values|NA
+
+  - id: debug-column-not-found
+    mode: debug
+    topic: column names after cleaning data
+    student_question: Why does dplyr say the column is not found after I cleaned the names?
+    likely_misconception: Assuming old column names still exist after janitor::clean_names() or rename().
+    student_code: |-
+      penguins_clean |>
+        filter(Species == "Adelie")
+    instructor_hint: Print names(penguins_clean) and compare them with the column name you typed inside filter().
+    instructor_explanation: After clean_names(), columns usually become lower snake_case names. A later filter() call must use the current column names, not the earlier printed labels from the raw file.
+    tags: dplyr, filter, clean_names, rename, debugging
+    source_path: Oct-Intro-Analytics/R/clean_penguins.R
+    match_terms: column not found, object not found, clean_names, rename, filter, species
+    packages: dplyr, janitor
+    error_pattern: column .* not found|object .* not found
+
+  - id: plan-grouped-comparison
+    mode: plan
+    topic: comparing averages across groups
+    student_question: How should I compare average body mass by species and sex?
+    likely_misconception: Jumping straight to a full script instead of planning groups, summaries, and any missing-value step.
+    student_code: |-
+      penguins_raw |>
+        group_by(species, sex) |>
+        summarise(mean_body_mass = mean(body_mass_g, na.rm = TRUE), .groups = "drop")
+    instructor_hint: Plan this as three small steps; choose the grouping columns, decide the summary, then check how to handle missing values.
+    instructor_explanation: A good plan is to identify the comparison groups, choose the summary statistic, and make the missing-value decision explicit. That keeps the final code short and makes each step easier to explain.
+    tags: dplyr, group_by, summarise, plan, missing-values
+    source_path: Oct-Intro-Analytics/summarise.qmd
+    match_terms: compare, average, mean, species, sex, grouped, summary, plan
+    packages: dplyr
+    error_pattern: ""
+
+  - id: plan-join-and-reshape
+    mode: plan
+    topic: joining tables before reshaping
+    student_question: How do I join the lookup table and then pivot the result for plotting?
+    likely_misconception: Treating joins and pivoting as one step instead of checking keys first and reshaping afterwards.
+    student_code: |-
+      left_join(scores_tbl, lookup_tbl, by = "student_id") |>
+        pivot_longer(starts_with("week_"), names_to = "week", values_to = "score")
+    instructor_hint: Plan the key columns first, confirm the join result, and only then pivot the repeated measurement columns longer.
+    instructor_explanation: A tidy workflow usually joins related tables before reshaping repeated columns for plotting or summary work. Checking the join keys first helps you avoid accidental duplicated rows or unexpected missing values.
+    tags: dplyr, left_join, pivot_longer, tidyr, plan
+    source_path: Oct-Intro-Analytics/join.qmd
+    match_terms: join, left_join, pivot_longer, reshape, plotting, lookup, key
+    packages: dplyr, tidyr
+    error_pattern: ""
+
+  - id: debug-ggplot-missing-plus-layer
+    mode: debug
+    topic: ggplot layer syntax when + is missing
+    student_question: Why does ggplot error when geom_point() is on the next line?
+    likely_misconception: Thinking ggplot layers can be stacked on new lines without + between layers.
+    student_code: |-
+      ggplot(penguins_clean, aes(x = body_mass_g, y = flipper_length_mm))
+      geom_point()
+    instructor_hint: Each ggplot layer must be joined with +, even when written on separate lines.
+    instructor_explanation: ggplot uses + to combine layers into one plot object. Without +, the next line is treated as a separate expression and causes syntax or ggplot errors.
+    tags: ggplot2, debugging, layers, plus, syntax
+    source_path: Oct-Intro-Analytics/ggplot.qmd
+    match_terms: ggplot, geom_point, layer, plus, syntax, error
+    packages: ggplot2
+    error_pattern: unexpected symbol|unexpected input|cannot add <ggproto>|non-numeric argument to binary operator
+
+  - id: debug-ggplot-aes-column-not-found
+    mode: debug
+    topic: ggplot aesthetics fail when a mapped column is missing
+    student_question: Why does ggplot say my aes() column is not found?
+    likely_misconception: Assuming old or misspelled column names will still work inside aes().
+    student_code: |-
+      penguins_clean |>
+        ggplot(aes(x = body_mass, y = flipper_length_mm, colour = species)) +
+        geom_point()
+    instructor_hint: Check names(penguins_clean) and match aes() column names exactly before plotting.
+    instructor_explanation: Aesthetic mappings only work for columns that exist in the supplied data. A misspelled or outdated column name triggers an evaluation error.
+    tags: ggplot2, debugging, aes, column names, tidyverse
+    source_path: Oct-Intro-Analytics/ggplot.qmd
+    match_terms: ggplot, aes, column not found, object not found, aesthetics, mapping
+    packages: ggplot2
+    error_pattern: object '.*' not found|Problem while computing aesthetics|Aesthetics are not valid data columns|column .* not found
+
+  - id: plan-ggplot-aesthetics-layered-plot
+    mode: plan
+    topic: planning layered ggplot aesthetics for grouped scatterplots
+    student_question: How should I plan a grouped scatterplot with mapped aesthetics and a trend layer?
+    likely_misconception: Jumping to one long plotting script instead of adding and checking one layer at a time.
+    student_code: |-
+      penguins_clean |>
+        ggplot(aes(x = culmen_length_mm, y = culmen_depth_mm, colour = species)) +
+        geom_point() +
+        geom_smooth(method = "lm")
+    instructor_hint: Build this in short layers; start with data and aes(), then add points, then add model overlays.
+    instructor_explanation: Layered construction keeps plotting code readable. Start with mappings, then geoms, then optional model or facet layers so each step is easy to check.
+    tags: ggplot2, plan, aes, geom_point, geom_smooth
+    source_path: Oct-Intro-Analytics/ggplot.qmd
+    match_terms: ggplot, aes, plan, layered, geom_point, geom_smooth, scatterplot
+    packages: ggplot2
+    error_pattern: ""
+
+  - id: explain-lm-intercept-only
+    mode: explain
+    topic: interpreting an intercept-only linear model
+    student_question: What does lm(height ~ 1) estimate?
+    likely_misconception: Thinking y ~ 1 means no model rather than a model of the overall mean.
+    student_code: |-
+      lsmodel0 <- lm(height ~ 1, data = darwin)
+      summary(lsmodel0)
+    instructor_hint: Compare the intercept estimate from summary() with mean(height) to see what the model is doing.
+    instructor_explanation: The formula y ~ 1 fits an intercept-only model. The intercept is the overall mean of y across all observations in the fitted data.
+    tags: stats, lm, intercept, mean, explain
+    source_path: Oct-Intro-Analytics/09-linear-models.qmd
+    match_terms: lm, linear model, intercept, height ~ 1, overall mean
+    packages: stats
+    error_pattern: ""
+
+  - id: debug-lm-contrasts-two-levels
+    mode: debug
+    topic: lm contrasts fail when a factor has fewer than two levels
+    student_question: Why does lm() say contrasts need two or more factor levels?
+    likely_misconception: Assuming the predictor still has two groups after filtering.
+    student_code: |-
+      darwin |>
+        dplyr::filter(type == "Cross") |>
+        lm(height ~ type, data = _)
+    instructor_hint: Check the number of factor levels in the model data after filtering before fitting lm().
+    instructor_explanation: This error appears when a factor predictor has only one level in the analysis data, so no between-group contrast can be estimated.
+    tags: stats, lm, factors, debugging, contrasts
+    source_path: Oct-Intro-Analytics/09-linear-models.qmd
+    match_terms: lm, contrasts, factor, levels, two or more levels, filter
+    packages: stats, dplyr
+    error_pattern: contrasts can be applied only to factors with 2 or more levels
+
+  - id: debug-lm-column-not-found
+    mode: debug
+    topic: lm formula variables must match existing columns
+    student_question: Why does lm() say my predictor or outcome is not found?
+    likely_misconception: Assuming formula names are checked against old labels rather than current column names.
+    student_code: |-
+      darwin |>
+        lm(Height ~ type, data = _)
+    instructor_hint: Print names(darwin) and align formula variable names with current column names exactly.
+    instructor_explanation: lm() evaluates formula variables in the supplied data. If names do not match current columns, model fitting fails before estimation.
+    tags: stats, lm, debugging, object not found, formula
+    source_path: Oct-Intro-Analytics/09-linear-models.qmd
+    match_terms: lm, formula, object not found, variable, column names
+    packages: stats
+    error_pattern: object '.*' not found|undefined columns selected
+
+  - id: plan-lm-two-group-comparison
+    mode: plan
+    topic: planning a two-group comparison with lm
+    student_question: How should I plan a two-group comparison for Cross versus Self plants?
+    likely_misconception: Starting interpretation before checking reference coding, fit, and uncertainty summaries.
+    student_code: |-
+      lsmodel1 <- lm(height ~ type, data = darwin)
+      broom::tidy(lsmodel1, conf.int = TRUE)
+    instructor_hint: Plan in steps; fit lm(height ~ type), check the reference level, then interpret estimates and confidence intervals.
+    instructor_explanation: For two-group questions, lm(height ~ type) estimates a reference-group mean and a group difference. Confidence intervals help explain uncertainty in that difference.
+    tags: stats, lm, plan, two-group, confidence-intervals
+    source_path: Oct-Intro-Analytics/09-linear-models.qmd
+    match_terms: lm, compare, two groups, cross, self, confidence interval, plan
+    packages: stats, broom
+    error_pattern: ""
