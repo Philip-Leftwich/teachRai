@@ -9,7 +9,8 @@ License: MIT + file LICENSE
 URL: https://github.com/Philip-Leftwich/teachRai
 BugReports: https://github.com/Philip-Leftwich/teachRai/issues
 Imports:
-    ellmer
+    ellmer,
+    yaml
 Suggests:
     lintr,
     rstudioapi,

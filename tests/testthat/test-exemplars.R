@@ -18,6 +18,20 @@ test_that("exemplar library has the expected structure", {
   expect_true(all(teachRai:::teachr_exemplars$mode %in% c("explain", "hint", "debug", "plan")))
 })
 
+test_that("teachr_load_exemplars errors clearly on a bad path", {
+  expect_error(teachr_load_exemplars(path = "does/not/exist.yaml"), "Could not locate")
+})
+
+test_that("teachr_load_exemplars matches the package-loaded exemplar table", {
+  loaded <- teachr_load_exemplars()
+  expect_identical(loaded, teachRai:::teachr_exemplars)
+  expect_identical(nrow(loaded), 8L)
+  expect_identical(
+    loaded$id[loaded$mode == "hint"][[1]],
+    "hint-filter-missing-values"
+  )
+})
+
 test_that("retrieval prefers topical matches for hint mode", {
   out <- teachr_find_exemplars(
     mode = "hint",
@@ -96,7 +110,7 @@ test_that("short terms do not match inside unrelated words", {
 
 test_that("run mode includes retrieved exemplars in the built prompt", {
   local_mocked_bindings(
-    teachr_chat = function(prompt, system_prompt, model, api_key) {
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
       list(prompt = prompt, system_prompt = system_prompt)
     }
   )
@@ -124,7 +138,7 @@ test_that("run mode includes retrieved exemplars in the built prompt", {
 
 test_that("plan run mode retrieves exemplars from the goal text", {
   local_mocked_bindings(
-    teachr_chat = function(prompt, system_prompt, model, api_key) {
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
       list(prompt = prompt, system_prompt = system_prompt)
     }
   )
@@ -148,7 +162,7 @@ test_that("plan run mode retrieves exemplars from the goal text", {
 
 test_that("plan run mode also accepts loaded_packages in context", {
   local_mocked_bindings(
-    teachr_chat = function(prompt, system_prompt, model, api_key) {
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
       list(prompt = prompt, system_prompt = system_prompt)
     }
   )

@@ -1,10 +1,12 @@
 teachr_explain <- function(context = NULL,
-                           model = "gemini-3.7-flash",
-                           api_key = Sys.getenv("GEMINI_API_KEY"),
+                           provider = NULL,
+                           model = NULL,
+                           api_key = NULL,
                            quiet = FALSE) {
   teachr_run_mode(
     mode = "explain",
     context = context,
+    provider = provider,
     model = model,
     api_key = api_key,
     quiet = quiet
@@ -12,12 +14,14 @@ teachr_explain <- function(context = NULL,
 }
 
 teachr_hint <- function(context = NULL,
-                        model = "gemini-3.7-flash",
-                        api_key = Sys.getenv("GEMINI_API_KEY"),
+                        provider = NULL,
+                        model = NULL,
+                        api_key = NULL,
                         quiet = FALSE) {
   teachr_run_mode(
     mode = "hint",
     context = context,
+    provider = provider,
     model = model,
     api_key = api_key,
     quiet = quiet
@@ -25,12 +29,14 @@ teachr_hint <- function(context = NULL,
 }
 
 teachr_debug <- function(context = NULL,
-                         model = "gemini-3.7-flash",
-                         api_key = Sys.getenv("GEMINI_API_KEY"),
+                         provider = NULL,
+                         model = NULL,
+                         api_key = NULL,
                          quiet = FALSE) {
   teachr_run_mode(
     mode = "debug",
     context = context,
+    provider = provider,
     model = model,
     api_key = api_key,
     quiet = quiet
@@ -43,8 +49,9 @@ teachr_run_mode <- function(mode,
                             data_columns = NULL,
                             object_names = NULL,
                             packages_loaded = NULL,
-                            model = "gemini-3.7-flash",
-                            api_key = Sys.getenv("GEMINI_API_KEY"),
+                            provider = NULL,
+                            model = NULL,
+                            api_key = NULL,
                             quiet = FALSE) {
   mode <- teachr_match_mode(mode)
 
@@ -89,6 +96,7 @@ teachr_run_mode <- function(mode,
   response <- teachr_chat(
     prompt = prompt,
     system_prompt = teachr_system_prompt(mode),
+    provider = provider,
     model = model,
     api_key = api_key
   )
