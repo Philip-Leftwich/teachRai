@@ -16,34 +16,104 @@ teachr_required_exemplar_columns <- c(
 
 teachr_allowed_exemplar_modes <- c("explain", "hint", "debug", "plan")
 
-teachr_coerce_exemplar_scalar <- function(x) {
+teachr_exemplar_yaml_path <- function() {
+  path <- system.file("extdata", "exemplars.yml", package = "teachRai")
+
+  if (nzchar(path) && file.exists(path)) {
+    return(path)
+  }
+
+  override_path <- Sys.getenv("TEACHRAI_EXEMPLAR_PATH", unset = "")
+
+  if (nzchar(override_path) && file.exists(override_path)) {
+    return(override_path)
+  }
+
+  namespace_path <- tryCatch(
+    getNamespaceInfo(asNamespace("teachRai"), "path"),
+    error = function(...) ""
+  )
+
+  fallback_path <- ""
+
+  if (is.character(namespace_path) && nzchar(namespace_path)) {
+    candidate <- file.path(namespace_path, "inst", "extdata", "exemplars.yml")
+    candidate <- normalizePath(candidate, winslash = "/", mustWork = FALSE)
+
+    if (file.exists(candidate)) {
+      fallback_path <- candidate
+    }
+  }
+
+  if (!is.na(fallback_path) && nzchar(fallback_path)) {
+    return(fallback_path)
+  }
+
+  ""
+}
+
+teachr_coerce_exemplar_scalar <- function(x, field, row_index) {
   if (is.null(x) || !length(x)) {
     return("")
   }
 
-  value <- unlist(x, use.names = FALSE)
-  value <- value[!is.na(value)]
+  if (length(x) != 1L) {
+    stop(
+      paste0(
+        "Exemplar row ",
+        row_index,
+        " field `",
+        field,
+        "` must be a single scalar value."
+      ),
+      call. = FALSE
+    )
+  }
 
-  if (!length(value)) {
+  value <- x[[1]]
+
+  if (is.list(value) || length(value) != 1L) {
+    stop(
+      paste0(
+        "Exemplar row ",
+        row_index,
+        " field `",
+        field,
+        "` must be a single scalar value."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (is.na(value)) {
     return("")
   }
 
-  paste(as.character(value), collapse = ",")
+  as.character(value)
 }
 
-teachr_load_exemplars <- function(path = system.file(
-  "extdata",
-  "exemplars.yml",
-  package = "teachRai"
-)) {
+teachr_load_exemplars <- function(path = teachr_exemplar_yaml_path()) {
   if (!nzchar(path) || !file.exists(path)) {
     stop("Exemplar YAML file was not found in package extdata.", call. = FALSE)
   }
 
-  payload <- yaml::read_yaml(path)
+  payload <- tryCatch(
+    yaml::read_yaml(path),
+    error = function(err) {
+      stop(
+        paste("Failed to parse exemplar YAML:", conditionMessage(err)),
+        call. = FALSE
+      )
+    }
+  )
+
+  if (!is.list(payload)) {
+    stop("Exemplar YAML must contain a top-level mapping.", call. = FALSE)
+  }
+
   exemplars <- payload$exemplars
 
-  if (is.null(exemplars) || !length(exemplars)) {
+  if (is.null(exemplars)) {
     stop("Exemplar YAML must include a non-empty `exemplars` key.", call. = FALSE)
   }
 
@@ -51,10 +121,20 @@ teachr_load_exemplars <- function(path = system.file(
     stop("`exemplars` must be a list of exemplar records.", call. = FALSE)
   }
 
+  if (!length(exemplars)) {
+    stop("Exemplar YAML must include a non-empty `exemplars` key.", call. = FALSE)
+  }
+
   rows <- lapply(seq_along(exemplars), function(i) {
     exemplar <- exemplars[[i]]
 
-    if (!is.list(exemplar)) {
+    exemplar_names <- names(exemplar)
+
+    if (
+      !is.list(exemplar) ||
+        is.null(exemplar_names) ||
+        any(!nzchar(trimws(exemplar_names)))
+    ) {
       stop("Each exemplar record must be a named mapping.", call. = FALSE)
     }
 
@@ -73,10 +153,20 @@ teachr_load_exemplars <- function(path = system.file(
     }
 
     exemplar <- exemplar[teachr_required_exemplar_columns]
-    exemplar[] <- lapply(exemplar, teachr_coerce_exemplar_scalar)
+    exemplar[] <- Map(
+      function(value, field) {
+        teachr_coerce_exemplar_scalar(value, field = field, row_index = i)
+      },
+      exemplar,
+      names(exemplar)
+    )
 
     as.data.frame(exemplar, stringsAsFactors = FALSE)
   })
+
+  if (!length(rows)) {
+    stop("Exemplar YAML must include a non-empty `exemplars` key.", call. = FALSE)
+  }
 
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
@@ -119,10 +209,25 @@ teachr_load_exemplars <- function(path = system.file(
     )
   }
 
-  out
+  out[teachr_required_exemplar_columns]
 }
 
-teachr_exemplars <- teachr_load_exemplars()
+teachr_exemplar_cache <- new.env(parent = emptyenv())
+teachr_exemplar_cache$data <- NULL
+
+teachr_get_exemplars <- function(force_reload = FALSE) {
+  if (isTRUE(force_reload) || is.null(teachr_exemplar_cache$data)) {
+    teachr_exemplar_cache$data <- teachr_load_exemplars()
+  }
+
+  teachr_exemplar_cache$data
+}
+
+makeActiveBinding(
+  "teachr_exemplars",
+  function() teachr_get_exemplars(),
+  env = environment()
+)
 
 teachr_find_exemplars <- function(mode,
                                   selection = "",
@@ -131,7 +236,8 @@ teachr_find_exemplars <- function(mode,
                                   goal_text = "",
                                   n = 2) {
   mode <- teachr_match_mode(mode)
-  pool <- teachr_exemplars[teachr_exemplars$mode == mode, , drop = FALSE]
+  exemplar_pool <- teachr_get_exemplars()
+  pool <- exemplar_pool[exemplar_pool$mode == mode, , drop = FALSE]
 
   if (!nrow(pool)) {
     return(pool)

@@ -98,7 +98,7 @@ exemplars:
     tags: dplyr, filter, clean_names, rename, debugging
     source_path: Oct-Intro-Analytics/R/clean_penguins.R
     match_terms: column not found, object not found, clean_names, rename, filter, species
-    packages: dplyr,janitor
+    packages: dplyr, janitor
     error_pattern: column .* not found|object .* not found
 
   - id: plan-grouped-comparison
@@ -131,7 +131,7 @@ exemplars:
     tags: dplyr, left_join, pivot_longer, tidyr, plan
     source_path: Oct-Intro-Analytics/join.qmd
     match_terms: join, left_join, pivot_longer, reshape, plotting, lookup, key
-    packages: dplyr,tidyr
+    packages: dplyr, tidyr
     error_pattern: ""
 
   - id: debug-ggplot-missing-plus-layer
@@ -215,7 +215,7 @@ exemplars:
     tags: stats, lm, factors, debugging, contrasts
     source_path: Oct-Intro-Analytics/09-linear-models.qmd
     match_terms: lm, contrasts, factor, levels, two or more levels, filter
-    packages: stats,dplyr
+    packages: stats, dplyr
     error_pattern: contrasts can be applied only to factors with 2 or more levels
 
   - id: debug-lm-column-not-found
@@ -247,5 +247,5 @@ exemplars:
     tags: stats, lm, plan, two-group, confidence-intervals
     source_path: Oct-Intro-Analytics/09-linear-models.qmd
     match_terms: lm, compare, two groups, cross, self, confidence interval, plan
-    packages: stats,broom
+    packages: stats, broom
     error_pattern: ""

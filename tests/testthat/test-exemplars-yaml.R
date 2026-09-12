@@ -22,6 +22,21 @@ test_that("teachr_load_exemplars validates malformed YAML content", {
     "non-empty `exemplars` key"
   )
 
+  tmp_non_mapping <- tempfile(fileext = ".yml")
+  writeLines(
+    c(
+      "exemplars:",
+      "  - - one",
+      "    - two"
+    ),
+    tmp_non_mapping
+  )
+
+  expect_error(
+    teachRai:::teachr_load_exemplars(tmp_non_mapping),
+    "named mapping"
+  )
+
   tmp_duplicate <- tempfile(fileext = ".yml")
   writeLines(
     c(
@@ -86,6 +101,40 @@ test_that("teachr_load_exemplars validates malformed YAML content", {
     teachRai:::teachr_load_exemplars(tmp_mode),
     "must be one of"
   )
+
+  tmp_invalid_yaml <- tempfile(fileext = ".yml")
+  writeLines("exemplars: [", tmp_invalid_yaml)
+
+  expect_error(
+    teachRai:::teachr_load_exemplars(tmp_invalid_yaml),
+    "Failed to parse exemplar YAML"
+  )
+
+  tmp_multivalue <- tempfile(fileext = ".yml")
+  writeLines(
+    c(
+      "exemplars:",
+      "  - id: multi-tags",
+      "    mode: explain",
+      "    topic: one",
+      "    student_question: one",
+      "    likely_misconception: one",
+      "    student_code: one",
+      "    instructor_hint: one",
+      "    instructor_explanation: one",
+      "    tags: [one, two]",
+      "    source_path: one",
+      "    match_terms: one",
+      "    packages: one",
+      "    error_pattern: ''"
+    ),
+    tmp_multivalue
+  )
+
+  expect_error(
+    teachRai:::teachr_load_exemplars(tmp_multivalue),
+    "single scalar value"
+  )
 })
 
 test_that("ggplot retrieval includes new debug and plan exemplars", {
@@ -109,6 +158,17 @@ test_that("ggplot retrieval includes new debug and plan exemplars", {
   expect_identical(plan_out$id[[1]], "plan-ggplot-aesthetics-layered-plot")
 })
 
+test_that("ggplot debug exemplar does not match unrelated errors without code context", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "",
+    recent_error = "Error: object 'darwin' not found",
+    packages = "ggplot2"
+  )
+
+  expect_identical(nrow(out), 0L)
+})
+
 test_that("linear model retrieval includes new debug and explain exemplars", {
   debug_out <- teachr_find_exemplars(
     mode = "debug",
@@ -128,4 +188,16 @@ test_that("linear model retrieval includes new debug and explain exemplars", {
 
   expect_true(nrow(explain_out) >= 1)
   expect_identical(explain_out$id[[1]], "explain-lm-intercept-only")
+})
+
+test_that("linear model debug retrieval distinguishes missing columns from contrasts errors", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "darwin |> lm(Height ~ type, data = _)",
+    recent_error = "Error in eval(predvars, data, env): object 'Height' not found",
+    packages = "stats"
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-lm-column-not-found")
 })
