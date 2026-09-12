@@ -105,6 +105,9 @@ teachr_build_prompt <- function(
   recent_error <- context$recent_error %||% ""
   error_state <- if (nzchar(recent_error)) "PRESENT" else "NONE"
   recent_error_text <- if (nzchar(recent_error)) recent_error else "NONE"
+  diagnostics_lines <- teachr_format_diagnostics_prompt(
+    context$diagnostics_context %||% list()
+  )
 
   base_lines <- c(
     paste("Mode:", teachr_title_case(mode)),
@@ -127,6 +130,10 @@ teachr_build_prompt <- function(
     "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",
     "5) Suggest short, readable code chunks and use |> where possible."
   )
+
+  if (length(diagnostics_lines) > 0) {
+    base_lines <- c(base_lines, "", diagnostics_lines)
+  }
 
   exemplar_lines <- teachr_format_exemplars(exemplars, mode = mode)
 
@@ -185,6 +192,80 @@ teachr_format_exemplar_entry <- function(exemplar, mode) {
   )
 
   teachr_compact_lines(lines)
+}
+
+teachr_format_diagnostics_prompt <- function(diagnostics_context) {
+  if (!length(diagnostics_context)) {
+    return(character())
+  }
+
+  lines <- "Diagnostics context:"
+
+  for (diagnostics in diagnostics_context) {
+    model_label <- paste(
+      diagnostics$model_name %||% "model",
+      sprintf("(%s; source: %s)",
+        paste(diagnostics$model_class %||% character(), collapse = "/"),
+        diagnostics$source %||% "base"
+      )
+    )
+
+    lines <- c(lines, paste0("- ", model_label))
+    lines <- c(
+      lines,
+      paste0("  Formula: ", diagnostics$summary$formula %||% "unknown"),
+      paste0(
+        "  Summary: n = ", teachr_format_numeric(diagnostics$summary$n_obs),
+        "; R-squared = ", teachr_format_numeric(diagnostics$summary$r_squared),
+        "; adj. R-squared = ", teachr_format_numeric(diagnostics$summary$adj_r_squared),
+        "; sigma = ", teachr_format_numeric(diagnostics$summary$sigma)
+      )
+    )
+
+    for (check in diagnostics$checks %||% list()) {
+      check_status <- if (isTRUE(check$ok)) "ok" else "fallback"
+      lines <- c(
+        lines,
+        paste0(
+          "  Check ", check$name %||% "diagnostic",
+          " (", check_status, "): ",
+          teachr_inline_text(check$text %||% "")
+        )
+      )
+    }
+
+    if (length(diagnostics$artifacts %||% list()) > 0) {
+      artifact_labels <- vapply(
+        diagnostics$artifacts,
+        function(artifact) {
+          paste0(
+            artifact$name %||% "diagnostic_plot",
+            " [", artifact$format %||% "unknown", "]"
+          )
+        },
+        character(1)
+      )
+
+      lines <- c(
+        lines,
+        paste0("  Plot artefacts: ", paste(artifact_labels, collapse = ", "))
+      )
+    }
+  }
+
+  lines
+}
+
+teachr_format_numeric <- function(x, digits = 3) {
+  if (length(x) == 0 || is.null(x) || is.na(x)) {
+    return("NA")
+  }
+
+  if (is.numeric(x)) {
+    return(format(round(x, digits), trim = TRUE, scientific = FALSE))
+  }
+
+  as.character(x[[1]])
 }
 
 teachr_inline_text <- function(x) {
