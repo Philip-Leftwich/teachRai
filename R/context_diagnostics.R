@@ -146,16 +146,14 @@ teachr_collect_performance_artifacts <- function(model, model_name) {
     model_name = model_name
   )
 
-  if (!nzchar(plot_path)) {
+  if (!length(plot_path)) {
     return(list())
   }
 
-  list(list(
+  c(list(list(
     name = "check_model",
-    type = "diagnostic_plot",
-    format = "png",
-    path = plot_path
-  ))
+    type = "diagnostic_plot"
+  )), list(plot_path))[[1]]
 }
 
 teachr_save_diagnostic_plot <- function(plot_object, model_name) {
@@ -164,11 +162,11 @@ teachr_save_diagnostic_plot <- function(plot_object, model_name) {
     fileext = ".png"
   )
 
-  device_open <- FALSE
+  png_device <- NA_integer_
   plot_ok <- tryCatch(
     {
       grDevices::png(filename = plot_path, width = 800, height = 800, res = 96)
-      device_open <- TRUE
+      png_device <- grDevices::dev.cur()
       suppressWarnings(
         suppressMessages(plot(plot_object))
       )
@@ -176,25 +174,34 @@ teachr_save_diagnostic_plot <- function(plot_object, model_name) {
     },
     error = function(...) FALSE,
     finally = {
-      if (device_open) {
-        grDevices::dev.off()
+      open_devices <- grDevices::dev.list()
+
+      if (!is.na(png_device) && !is.null(open_devices) && png_device %in% open_devices) {
+        grDevices::dev.off(which = png_device)
       }
     }
   )
 
   if (!isTRUE(plot_ok) || !file.exists(plot_path)) {
     unlink(plot_path)
-    return("")
+    return(list())
   }
 
   plot_info <- file.info(plot_path)
 
   if (is.na(plot_info$size) || plot_info$size < 1) {
     unlink(plot_path)
-    return("")
+    return(list())
   }
 
-  plot_path
+  size_bytes <- unname(plot_info$size[[1]])
+  unlink(plot_path)
+
+  list(
+    format = "png",
+    captured = TRUE,
+    size_bytes = size_bytes
+  )
 }
 
 teachr_model_summary_metadata <- function(model) {
