@@ -22,7 +22,7 @@ teachr_chat <- function(prompt,
     )
   }
 
-  constructor <- getExportedValue("ellmer", provider_info$constructor)
+  constructor <- teachr_ellmer_constructor(provider_info$constructor)
   chat <- constructor(
     system_prompt = system_prompt,
     api_key = api_key,
@@ -30,4 +30,14 @@ teachr_chat <- function(prompt,
   )
 
   chat$chat(prompt)
+}
+
+teachr_ellmer_constructor <- function(name) {
+  switch(
+    name,
+    chat_google_gemini = ellmer::chat_google_gemini,
+    chat_openai = ellmer::chat_openai,
+    chat_anthropic = ellmer::chat_anthropic,
+    stop("Unsupported ellmer constructor: ", name, call. = FALSE)
+  )
 }

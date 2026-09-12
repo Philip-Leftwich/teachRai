@@ -28,7 +28,7 @@ teachr_current_selection <- function() {
 teachr_recent_error <- function() {
   error <- trimws(geterrmessage())
 
-  if (!nzchar(error) || identical(error, "Error:")) {
+  if (!nzchar(error) || identical(error, "Error :")) {
     return("")
   }
 
