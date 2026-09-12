@@ -2,7 +2,8 @@ teachr_capture_context <- function() {
   list(
     selection = teachr_current_selection(),
     recent_error = teachr_recent_error(),
-    loaded_packages = teachr_loaded_packages()
+    loaded_packages = teachr_loaded_packages(),
+    diagnostics_context = teachr_diagnostics_context()
   )
 }
 
