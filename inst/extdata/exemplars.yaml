@@ -132,3 +132,217 @@
   match_terms: "join, left_join, pivot_longer, reshape, plotting, lookup, key"
   packages: "dplyr,tidyr"
   error_pattern: ""
+
+- id: "explain-stringr-detect-clean"
+  mode: "explain"
+  topic: "filtering text with stringr"
+  student_question: "Why does str_detect() need quotes and what does the pattern actually match?"
+  likely_misconception: "Thinking str_detect() works like a plain text search rather than matching a regular expression pattern."
+  student_code: |-
+    penguins_raw |>
+      filter(str_detect(species, "Adelie"))
+  instructor_hint: "Read the pattern argument as a regular expression, not literal text, and check whether special characters need escaping."
+  instructor_explanation: "str_detect() returns TRUE or FALSE for whether a regular expression pattern is found in each string. Plain words like \"Adelie\" match literally, but characters such as . or ( have special meaning and may need fixed() or escaping."
+  tags: "stringr, str_detect, regex, filter, tidyverse"
+  source_path: "Oct-Intro-Analytics/strings.qmd"
+  match_terms: "str_detect, stringr, pattern, regex, filter, string"
+  packages: "stringr"
+  error_pattern: ""
+
+- id: "hint-stringr-clean-units"
+  mode: "hint"
+  topic: "removing unwanted characters from text"
+  student_question: "How do I remove the 'mm' from the end of my measurement column so I can use it as a number?"
+  likely_misconception: "Assuming as.numeric() will silently strip letters from a string instead of returning NA."
+  student_code: |-
+    penguins_raw |>
+      mutate(flipper_length_mm = as.numeric(flipper_length_clean))
+  instructor_hint: "Remove the non-numeric part first with str_remove() before converting with as.numeric()."
+  instructor_explanation: "as.numeric() only converts strings that already look like plain numbers; anything else, including trailing units, produces NA with a warning. Use str_remove() (or str_extract() for the numeric part) before converting."
+  tags: "stringr, str_remove, as.numeric, cleaning, tidyverse"
+  source_path: "Oct-Intro-Analytics/strings.qmd"
+  match_terms: "str_remove, str_extract, as.numeric, mm, units, coerce, na"
+  packages: "stringr"
+  error_pattern: ""
+
+- id: "hint-duplicates-distinct"
+  mode: "hint"
+  topic: "removing duplicate rows"
+  student_question: "How do I remove penguins that were accidentally recorded twice?"
+  likely_misconception: "Expecting duplicate rows to be removed automatically by summarise() or group_by() rather than needing an explicit distinct() step."
+  student_code: |-
+    penguins_raw |>
+      group_by(species) |>
+      summarise(mean_body_mass = mean(body_mass_g, na.rm = TRUE))
+  instructor_hint: "Check for duplicate rows with distinct() or janitor::get_dupes() before summarising, not after."
+  instructor_explanation: "group_by() and summarise() operate on whatever rows exist; they do not detect or remove duplicates. Use dplyr::distinct() to drop exact duplicate rows, or janitor::get_dupes() first to see which rows are repeated."
+  tags: "dplyr, distinct, janitor, get_dupes, duplicates, tidyverse"
+  source_path: "Oct-Intro-Analytics/duplicates.qmd"
+  match_terms: "distinct, get_dupes, duplicate, duplicated, repeated, rows"
+  packages: "dplyr"
+  error_pattern: ""
+
+- id: "debug-duplicates-join-multiplication"
+  mode: "debug"
+  topic: "unexpected row counts after a join"
+  student_question: "Why do I have more rows after joining than I started with?"
+  likely_misconception: "Assuming a join always keeps one row per original row, rather than checking whether the join key is unique in both tables."
+  student_code: |-
+    penguins_raw |>
+      left_join(site_lookup, by = "island")
+  instructor_hint: "Check whether island is unique in site_lookup with janitor::get_dupes(site_lookup, island) before joining."
+  instructor_explanation: "A left_join() duplicates rows from the left table whenever the join key matches more than one row in the right table. Extra rows after a join almost always mean the key isn't unique on one side - check with janitor::get_dupes() or dplyr::count() on the join key first."
+  tags: "dplyr, left_join, janitor, get_dupes, duplicates, debugging"
+  source_path: "Oct-Intro-Analytics/duplicates.qmd"
+  match_terms: "left_join, join, duplicate, get_dupes, rows, key, multiplied"
+  packages: "dplyr,janitor"
+  error_pattern: ""
+
+- id: "explain-dates-parsing"
+  mode: "explain"
+  topic: "parsing dates with lubridate"
+  student_question: "Why is R treating my visit_date column as text instead of a date?"
+  likely_misconception: "Assuming R automatically recognises date-looking strings as Date objects on import, without an explicit parsing step."
+  student_code: |-
+    field_visits |>
+      mutate(visit_date = ymd(visit_date))
+  instructor_hint: "Check the class of the column first with class(field_visits$visit_date) before and after parsing."
+  instructor_explanation: "Dates read from a spreadsheet or CSV usually arrive as plain character strings. lubridate's ymd()/dmy()/mdy() functions parse a specific text layout into a real Date, which then supports correct sorting, comparison, and date arithmetic."
+  tags: "lubridate, ymd, dates, parsing, tidyverse"
+  source_path: "Oct-Intro-Analytics/dates.qmd"
+  match_terms: "ymd, dmy, mdy, lubridate, date, parse, visit_date"
+  packages: "lubridate"
+  error_pattern: ""
+
+- id: "debug-dates-string-sort"
+  mode: "debug"
+  topic: "dates sorting in the wrong order"
+  student_question: "Why does arrange() put my dates in a strange order instead of earliest to latest?"
+  likely_misconception: "Assuming character strings that look like dates will sort chronologically the same way real Date objects do."
+  student_code: |-
+    field_visits |>
+      arrange(visit_date)
+  instructor_hint: "Check class(field_visits$visit_date); if it says 'character', parse it with lubridate before arranging."
+  instructor_explanation: "arrange() sorts character strings alphabetically, not chronologically, so \"9 March\" can sort after \"10 March\" if visit_date is still text. Convert the column to a real Date with lubridate (e.g. ymd()) first, then arrange() sorts correctly."
+  tags: "lubridate, dates, arrange, sort, character, debugging"
+  source_path: "Oct-Intro-Analytics/dates.qmd"
+  match_terms: "arrange, sort, date, character, visit_date, chronological, order"
+  packages: "lubridate,dplyr"
+  error_pattern: ""
+
+- id: "hint-factors-relevel"
+  mode: "hint"
+  topic: "setting a baseline factor level"
+  student_question: "How do I make 'control' show up first on my plot instead of wherever it lands alphabetically?"
+  likely_misconception: "Assuming factor level order always matches the order the data was collected or entered, rather than defaulting to alphabetical."
+  student_code: |-
+    penguins_clean |>
+      mutate(species = factor(species))
+  instructor_hint: "Use forcats::fct_relevel() to explicitly set which level should come first."
+  instructor_explanation: "factor() defaults to alphabetical level order unless told otherwise. forcats::fct_relevel(species, \"Adelie\") moves a named level to the front without changing the underlying data, which is useful for plot ordering or choosing a model baseline."
+  tags: "forcats, fct_relevel, factor, levels, tidyverse"
+  source_path: "Oct-Intro-Analytics/factors.qmd"
+  match_terms: "fct_relevel, factor, level, baseline, forcats, order"
+  packages: "forcats"
+  error_pattern: ""
+
+- id: "debug-factors-bar-order"
+  mode: "debug"
+  topic: "bars plotting in an unexpected order"
+  student_question: "Why are my ggplot bars not in the order I expected?"
+  likely_misconception: "Assuming ggplot orders categorical bars by the order rows appear in the data, rather than by the underlying factor level order."
+  student_code: |-
+    penguins_clean |>
+      ggplot(aes(x = species)) +
+      geom_bar()
+  instructor_hint: "Check levels(penguins_clean$species) - that order is what ggplot uses for the bars."
+  instructor_explanation: "ggplot2 always draws categorical axes in factor level order, not row order. Use forcats::fct_reorder() (to order by a summary value) or fct_relevel() (to set a specific order) before plotting."
+  tags: "ggplot2, forcats, fct_reorder, factor, geom_bar, debugging"
+  source_path: "Oct-Intro-Analytics/factors.qmd"
+  match_terms: "geom_bar, factor, level, order, fct_reorder, bars"
+  packages: "ggplot2,forcats"
+  error_pattern: ""
+
+- id: "explain-ggplot-facets"
+  mode: "explain"
+  topic: "splitting a plot into panels with facets"
+  student_question: "What does facet_wrap() do and why does it split my plot into several small plots?"
+  likely_misconception: "Thinking facet_wrap() draws separate, unrelated plots rather than one plot split by a shared variable and shared scales."
+  student_code: |-
+    penguins_raw |>
+      ggplot(aes(x = flipper_length_mm, y = body_mass_g)) +
+      geom_point() +
+      facet_wrap(~ island)
+  instructor_hint: "Read facet_wrap(~ island) as 'repeat this same plot once per island', with matching axes unless told otherwise."
+  instructor_explanation: "facet_wrap() splits one plot into a grid of small multiples, one panel per level of the faceting variable, while keeping the same geoms and, by default, the same axis scales so panels stay comparable."
+  tags: "ggplot2, facet_wrap, facets, visualisation, tidyverse"
+  source_path: "Oct-Intro-Analytics/ggplot.qmd"
+  match_terms: "facet_wrap, facet, panels, island, small multiples"
+  packages: "ggplot2"
+  error_pattern: ""
+
+- id: "hint-ggplot-layer-missing"
+  mode: "hint"
+  topic: "a plot layer not appearing"
+  student_question: "Why doesn't my geom_smooth() line show up on the plot?"
+  likely_misconception: "Assuming every geom automatically inherits the same x/y mapping from the first geom, even when a later layer supplies its own, incompatible data or aesthetics."
+  student_code: |-
+    penguins_raw |>
+      ggplot() +
+      geom_point(aes(x = flipper_length_mm, y = body_mass_g)) +
+      geom_smooth()
+  instructor_hint: "Move the aes() mapping up into ggplot() itself so every layer, including geom_smooth(), inherits x and y."
+  instructor_explanation: "Aesthetics set inside a single geom only apply to that geom. Putting aes(x =, y =) inside ggplot() instead means every subsequent layer, including geom_smooth(), inherits the same mapping automatically."
+  tags: "ggplot2, geom_smooth, aes, layers, tidyverse"
+  source_path: "Oct-Intro-Analytics/ggplot.qmd"
+  match_terms: "geom_smooth, geom_point, aes, layer, inherit, missing"
+  packages: "ggplot2"
+  error_pattern: ""
+
+- id: "explain-lm-basics"
+  mode: "explain"
+  topic: "fitting and reading a simple linear model"
+  student_question: "What do the numbers in the lm() summary() output actually mean?"
+  likely_misconception: "Reading the Intercept row as 'not important' rather than the predicted value when the predictor is zero, and misreading the slope's sign or size."
+  student_code: |-
+    model <- lm(body_mass_g ~ flipper_length_mm, data = penguins_clean)
+    summary(model)
+  instructor_hint: "Look at the Estimate column: the Intercept is the predicted body mass when flipper length is 0, and the flipper_length_mm row is the predicted change in body mass per 1 mm increase."
+  instructor_explanation: "lm(y ~ x, data) fits a straight line predicting y from x. summary() reports the intercept and slope as Estimates, each with a standard error and p-value testing whether that coefficient differs from zero."
+  tags: "lm, linear model, summary, coefficients, stats"
+  source_path: "Oct-Intro-Analytics/linear-models.qmd"
+  match_terms: "lm, summary, coefficients, intercept, slope, estimate, linear model"
+  packages: ""
+  error_pattern: ""
+
+- id: "hint-lm-geom-smooth"
+  mode: "hint"
+  topic: "adding a fitted line to a scatterplot"
+  student_question: "How do I add a line of best fit to my scatterplot?"
+  likely_misconception: "Assuming a fitted line must be calculated separately with lm() and then drawn manually, rather than letting ggplot2 fit it as part of the plot."
+  student_code: |-
+    penguins_clean |>
+      ggplot(aes(x = flipper_length_mm, y = body_mass_g)) +
+      geom_point()
+  instructor_hint: "Add geom_smooth(method = \"lm\", se = FALSE) as another layer after geom_point()."
+  instructor_explanation: "geom_smooth(method = \"lm\") fits and draws a linear model line directly on the plot using the same x/y mapping as the rest of the layers, without needing to call lm() separately first."
+  tags: "ggplot2, geom_smooth, lm, linear model, tidyverse"
+  source_path: "Oct-Intro-Analytics/linear-models.qmd"
+  match_terms: "geom_smooth, lm, line, fitted, best fit, method"
+  packages: "ggplot2"
+  error_pattern: ""
+
+- id: "debug-lm-formula-order"
+  mode: "debug"
+  topic: "lm() argument order errors"
+  student_question: "Why does lm() give an error when I try to fit my model?"
+  likely_misconception: "Assuming lm() takes the data frame as its first argument, the way most dplyr/tidyr functions do."
+  student_code: |-
+    model <- lm(penguins_clean, body_mass_g ~ flipper_length_mm)
+  instructor_hint: "Check the argument order: lm() takes the formula first, then data = ..., unlike most dplyr/tidyr functions."
+  instructor_explanation: "lm()'s first argument is the model formula (y ~ x), not the data frame. Passing the data frame first means R treats it as the formula argument, which fails because a data frame cannot be used as a formula."
+  tags: "lm, formula, arguments, debugging, stats"
+  source_path: "Oct-Intro-Analytics/linear-models.qmd"
+  match_terms: "lm, formula, argument, data, coerce, model"
+  packages: ""
+  error_pattern: "cannot coerce class .*formula.* to a data.frame"

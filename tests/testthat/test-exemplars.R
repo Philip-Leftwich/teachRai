@@ -25,11 +25,57 @@ test_that("teachr_load_exemplars errors clearly on a bad path", {
 test_that("teachr_load_exemplars matches the package-loaded exemplar table", {
   loaded <- teachr_load_exemplars()
   expect_identical(loaded, teachRai:::teachr_exemplars)
-  expect_identical(nrow(loaded), 8L)
+  expect_true(nrow(loaded) >= 8)
   expect_identical(
     loaded$id[loaded$mode == "hint"][[1]],
     "hint-filter-missing-values"
   )
+})
+
+test_that("retrieval finds the new stringr exemplar for explain mode", {
+  out <- teachr_find_exemplars(
+    mode = "explain",
+    selection = "penguins_raw |> filter(str_detect(species, \"Adelie\"))",
+    packages = "stringr"
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "explain-stringr-detect-clean")
+})
+
+test_that("retrieval finds the new dates exemplar for debug mode", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "field_visits |> arrange(visit_date)",
+    packages = c("lubridate", "dplyr")
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-dates-string-sort")
+})
+
+test_that("retrieval uses the error pattern for the new lm formula-order exemplar", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "model <- lm(penguins_clean, body_mass_g ~ flipper_length_mm)",
+    recent_error = "Error in as.data.frame.default(data) : cannot coerce class 'formula' to a data.frame",
+    packages = character()
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-lm-formula-order")
+  expect_identical(out$error_matches[[1]], 1L)
+})
+
+test_that("retrieval finds the new duplicates exemplar for debug mode", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "penguins_raw |> left_join(site_lookup, by = \"island\")",
+    packages = c("dplyr", "janitor")
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-duplicates-join-multiplication")
 })
 
 test_that("retrieval prefers topical matches for hint mode", {
