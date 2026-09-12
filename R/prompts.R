@@ -36,6 +36,7 @@ teachr_system_prompt <- function(mode) {
       "When suggesting code, use the native pipe operator |>, where possible.",
       "Use only the observed error text when supplied.",
       "Hard rule: if observed error state is NONE, do not provide a diagnosis.",
+      "Hard rule: if observed error state is UNCERTAIN, say the error may not match the current selection and offer general debugging steps rather than a definitive diagnosis.",
       "If no observed error is supplied, state this clearly and request the next run/check to capture one.",
       "Do not invent error messages, warnings, or causes."
     ),
@@ -103,8 +104,14 @@ teachr_build_prompt <- function(
   packages_text <- if (length(packages) == 0) "NONE" else paste(packages, collapse = ", ")
 
   recent_error <- context$recent_error %||% ""
-  error_state <- if (nzchar(recent_error)) "PRESENT" else "NONE"
-  recent_error_text <- if (nzchar(recent_error)) recent_error else "NONE"
+  error_state_raw <- teachr_error_state(context)
+  error_state <- switch(
+    error_state_raw,
+    absent = "NONE",
+    present = "PRESENT",
+    uncertain = "UNCERTAIN"
+  )
+  recent_error_text <- if (identical(error_state_raw, "absent")) "NONE" else recent_error
 
   base_lines <- c(
     paste("Mode:", teachr_title_case(mode)),
@@ -122,6 +129,7 @@ teachr_build_prompt <- function(
     "",
     "Response rules:",
     "1) If observed error state is NONE, do not mention any specific error/problem.",
+    "1a) If observed error state is UNCERTAIN, mention explicitly that the error text may be unrelated to the current selection before using it.",
     "2) If code selection state is EMPTY, do not infer what the code does.",
     "3) Ask for exactly one concrete next step.",
     "4) Prefer tidyverse over base R for data tasks unless base R is explicitly requested.",

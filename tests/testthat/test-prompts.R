@@ -124,6 +124,19 @@ test_that("debug exemplar formatting includes explanation text", {
   expect_match(out, "Instructor explanation:")
 })
 
+test_that("debug prompt flags an error state as uncertain when unrelated to the selection", {
+  context <- list(
+    selection = "mtcars |> summarise(mean(mpg))",
+    recent_error = "Error in foo(): object 'bar' not found",
+    loaded_packages = c("dplyr")
+  )
+
+  out <- teachr_build_prompt(mode = "debug", context = context)
+
+  expect_match(out, "Observed error state: UNCERTAIN")
+  expect_match(out, "Error in foo\\(\\): object 'bar' not found")
+})
+
 test_that("system prompts keep anti-hallucination rules", {
   explain_sys <- teachr_system_prompt("explain")
   hint_sys <- teachr_system_prompt("hint")
@@ -137,4 +150,5 @@ test_that("system prompts keep anti-hallucination rules", {
 
   expect_match(debug_sys, "Use only the observed error text when supplied")
   expect_match(debug_sys, "Do not invent error messages, warnings, or causes")
+  expect_match(debug_sys, "UNCERTAIN")
 })
