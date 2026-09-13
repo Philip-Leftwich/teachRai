@@ -74,7 +74,28 @@ teachr_compact_lines <- function(lines) {
   sub("\\n+$", "", text)
 }
 
-teachr_prompt_for_key <- function() {
+teachr_prompt_for_provider <- function() {
+  if (!interactive()) {
+    stop(
+      "Supply `provider` when running teachr_setup() non-interactively.",
+      call. = FALSE
+    )
+  }
+
+  providers <- teachr_providers()
+  choice <- utils::menu(
+    choices = vapply(providers, `[[`, character(1), "label"),
+    title = "Which LLM provider would you like to use?"
+  )
+
+  if (choice < 1) {
+    stop("No provider was selected.", call. = FALSE)
+  }
+
+  names(providers)[[choice]]
+}
+
+teachr_prompt_for_key <- function(provider_label = "Gemini") {
   if (!interactive()) {
     stop(
       "Supply `api_key` when running teachr_setup() non-interactively.",
@@ -82,7 +103,7 @@ teachr_prompt_for_key <- function() {
     )
   }
 
-  readline("Paste your Gemini API key: ")
+  readline(paste0("Paste your ", provider_label, " API key: "))
 }
 
 teachr_write_renviron_var <- function(name, value, path = path.expand("~/.Renviron")) {

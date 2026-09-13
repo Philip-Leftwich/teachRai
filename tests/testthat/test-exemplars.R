@@ -18,6 +18,66 @@ test_that("exemplar library has the expected structure", {
   expect_true(all(teachRai:::teachr_exemplars$mode %in% c("explain", "hint", "debug", "plan")))
 })
 
+test_that("teachr_load_exemplars errors clearly on a bad path", {
+  expect_error(teachr_load_exemplars(path = "does/not/exist.yaml"), "Could not locate")
+})
+
+test_that("teachr_load_exemplars matches the package-loaded exemplar table", {
+  loaded <- teachr_load_exemplars()
+  expect_identical(loaded, teachRai:::teachr_exemplars)
+  expect_true(nrow(loaded) >= 8)
+  expect_identical(
+    loaded$id[loaded$mode == "hint"][[1]],
+    "hint-filter-missing-values"
+  )
+})
+
+test_that("retrieval finds the new stringr exemplar for explain mode", {
+  out <- teachr_find_exemplars(
+    mode = "explain",
+    selection = "penguins_raw |> filter(str_detect(species, \"Adelie\"))",
+    packages = "stringr"
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "explain-stringr-detect-clean")
+})
+
+test_that("retrieval finds the new dates exemplar for debug mode", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "field_visits |> arrange(visit_date)",
+    packages = c("lubridate", "dplyr")
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-dates-string-sort")
+})
+
+test_that("retrieval uses the error pattern for the new lm formula-order exemplar", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "model <- lm(penguins_clean, body_mass_g ~ flipper_length_mm)",
+    recent_error = "Error in as.data.frame.default(data) : cannot coerce class 'formula' to a data.frame",
+    packages = character()
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-lm-formula-order")
+  expect_identical(out$error_matches[[1]], 1L)
+})
+
+test_that("retrieval finds the new duplicates exemplar for debug mode", {
+  out <- teachr_find_exemplars(
+    mode = "debug",
+    selection = "penguins_raw |> left_join(site_lookup, by = \"island\")",
+    packages = c("dplyr", "janitor")
+  )
+
+  expect_true(nrow(out) >= 1)
+  expect_identical(out$id[[1]], "debug-duplicates-join-multiplication")
+})
+
 test_that("retrieval prefers topical matches for hint mode", {
   out <- teachr_find_exemplars(
     mode = "hint",
@@ -96,7 +156,7 @@ test_that("short terms do not match inside unrelated words", {
 
 test_that("run mode includes retrieved exemplars in the built prompt", {
   local_mocked_bindings(
-    teachr_chat = function(prompt, system_prompt, model, api_key) {
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
       list(prompt = prompt, system_prompt = system_prompt)
     }
   )
@@ -124,7 +184,7 @@ test_that("run mode includes retrieved exemplars in the built prompt", {
 
 test_that("plan run mode retrieves exemplars from the goal text", {
   local_mocked_bindings(
-    teachr_chat = function(prompt, system_prompt, model, api_key) {
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
       list(prompt = prompt, system_prompt = system_prompt)
     }
   )
@@ -148,7 +208,7 @@ test_that("plan run mode retrieves exemplars from the goal text", {
 
 test_that("plan run mode also accepts loaded_packages in context", {
   local_mocked_bindings(
-    teachr_chat = function(prompt, system_prompt, model, api_key) {
+    teachr_chat = function(prompt, system_prompt, provider, model, api_key) {
       list(prompt = prompt, system_prompt = system_prompt)
     }
   )
