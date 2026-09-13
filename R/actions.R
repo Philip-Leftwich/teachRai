@@ -43,6 +43,29 @@ teachr_debug <- function(context = NULL,
   )
 }
 
+teachr_plan <- function(goal_text = NULL,
+                        context = NULL,
+                        data_columns = NULL,
+                        object_names = NULL,
+                        packages_loaded = NULL,
+                        provider = NULL,
+                        model = NULL,
+                        api_key = NULL,
+                        quiet = FALSE) {
+  teachr_run_mode(
+    mode = "plan",
+    context = context,
+    goal_text = goal_text,
+    data_columns = data_columns,
+    object_names = object_names,
+    packages_loaded = packages_loaded,
+    provider = provider,
+    model = model,
+    api_key = api_key,
+    quiet = quiet
+  )
+}
+
 teachr_run_mode <- function(mode,
                             context = NULL,
                             goal_text = NULL,
