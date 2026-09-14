@@ -25,7 +25,7 @@ teachr_chat <- function(prompt,
   constructor <- teachr_ellmer_constructor(provider_info$constructor)
   chat <- constructor(
     system_prompt = system_prompt,
-    credentials = api_key,
+    credentials = function() api_key,
     model = model
   )
 

@@ -1,6 +1,6 @@
 Package: teachRai
 Title: Teaching-Focused RStudio Addin for Working with Ellmer
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Philip", "Leftwich", , "Philip-Leftwich@users.noreply.github.com", role = c("aut", "cre"))
 Description: A small, student-friendly RStudio addin built on ellmer for

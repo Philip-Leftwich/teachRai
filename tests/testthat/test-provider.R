@@ -5,7 +5,7 @@ test_that("teachr_resolve_provider defaults to gemini", {
 
   info <- teachr_resolve_provider()
   expect_identical(info$label, "Google Gemini")
-  expect_identical(info$env_var, "GEMINI_API_KEY")
+  expect_identical(info$env_var, "GOOGLE_API_KEY")
 })
 
 test_that("teachr_resolve_provider resolves case-insensitively and trims whitespace", {
