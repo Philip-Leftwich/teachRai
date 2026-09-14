@@ -1,7 +1,7 @@
 teachr_providers <- function() {
   list(
     gemini = list(
-      label = "Google Gemini",
+      label = "Google Gemini (currently free)",
       env_var = "GOOGLE_API_KEY",
       signup_url = "https://aistudio.google.com/app/apikey",
       default_model = "gemini-3.7-flash",
