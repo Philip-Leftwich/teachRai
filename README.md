@@ -5,18 +5,23 @@ teachRai is a small, teaching-focused R package and RStudio addin built on
 for an explanation, a hint, or debugging help from their current coding
 context without adding a large interface or complex setup.
 
-## What v0.1 includes
+## What v0.2 includes
 
-- a guided setup helper for saving a Gemini API key in `~/.Renviron`
+- a guided setup helper for saving a provider API key in `~/.Renviron`
+- support for three LLM providers — Gemini, OpenAI, and Anthropic (Claude) —
+  built on `ellmer`
+- easy provider/model switching, either per call or for the rest of a session
+  with `teachr_set_provider()` / `teachr_set_model()`
 - a lightweight RStudio context capture helper
-- three teaching modes: explain, hint, and debug
-- a Gemini-first chat wrapper built on `ellmer`
+- four teaching modes: explain, hint, debug, and plan
 - a simple RStudio addin entry point
-- a small internal exemplar library for common introductory analytics patterns
+- an expanded internal exemplar library covering common introductory
+  analytics patterns (strings, dates, duplicates, factors, `ggplot2`, simple
+  linear models, and more)
 - basic console output rendering
 
-The first release is intentionally small so it stays easy for students and
-teachers to understand.
+teachRai stays intentionally small and focused so it remains easy for
+students and teachers to understand.
 
 ## Installation
 
@@ -25,8 +30,8 @@ install.packages("remotes")
 remotes::install_github("Philip-Leftwich/teachRai")
 ```
 
-`teachRai` depends on `ellmer`. Installing from GitHub will install package
-dependencies for you.
+`teachRai` depends on `ellmer` (>= 0.4.0). Installing from GitHub will install
+package dependencies for you.
 
 ## Setup
 
@@ -37,9 +42,31 @@ library(teachRai)
 teachr_setup()
 ```
 
-`teachr_setup()` helps you get a Gemini API key and saves it to
-`~/.Renviron` as `GEMINI_API_KEY`. After saving your key, restart R so the new
-environment variable is available in your session.
+`teachr_setup()` walks you through choosing a provider (Gemini, OpenAI, or
+Anthropic), helps you get an API key, and saves it to `~/.Renviron` under the
+name each provider's SDK expects — `GOOGLE_API_KEY`, `OPENAI_API_KEY`, or
+`ANTHROPIC_API_KEY` — along with your chosen provider as `TEACHR_PROVIDER`.
+You can optionally pass `model = "..."` to also save a default model as
+`TEACHR_MODEL`. After saving, restart R so the new environment variables are
+available in your session.
+
+These are the same environment variable names `ellmer` looks for by default,
+so your key also works if you ever call `ellmer::chat_google_gemini()` (etc.)
+directly, without going through teachRai at all.
+
+### Switching provider or model
+
+The provider/model saved by `teachr_setup()` become your defaults, but you
+can override them at any time:
+
+```r
+# just for one call
+teachr_explain(provider = "openai", model = "gpt-4.1")
+
+# for the rest of the R session, no restart needed
+teachr_set_provider("anthropic")
+teachr_set_model("claude-haiku-4-5")
+```
 
 ## First use
 
@@ -64,6 +91,13 @@ teachr_hint()
 teachr_debug()
 ```
 
+A fourth mode, **plan**, helps a student turn a stated goal into a concrete
+next step before they start writing code:
+
+```r
+teachr_plan(goal_text = "summarise my data by group and make a bar chart")
+```
+
 ## How teachRai works
 
 teachRai keeps the first workflow deliberately simple:
@@ -73,7 +107,7 @@ teachRai keeps the first workflow deliberately simple:
 3. capture the currently loaded packages
 4. retrieve a small number of matching teaching exemplars when the selected code, plan goal, or observed debug error clearly matches a known pattern
 5. build a short teaching prompt
-6. send that prompt to Gemini with `ellmer`
+6. send that prompt to your configured provider (Gemini by default) with `ellmer`
 7. print the reply in the console
 
 It does **not** try to capture a whole project, build a Shiny gadget, or run

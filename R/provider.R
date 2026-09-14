@@ -2,7 +2,7 @@ teachr_providers <- function() {
   list(
     gemini = list(
       label = "Google Gemini",
-      env_var = "GEMINI_API_KEY",
+      env_var = "GOOGLE_API_KEY",
       signup_url = "https://aistudio.google.com/app/apikey",
       default_model = "gemini-3.7-flash",
       constructor = "chat_google_gemini"
