@@ -332,6 +332,51 @@
   packages: "ggplot2"
   error_pattern: ""
 
+- id: "plan-import-here-readr"
+  mode: "plan"
+  topic: "reading a data file into a project with here and readr"
+  student_question: "How should I read in my CSV file so it works regardless of where I run the script?"
+  likely_misconception: "Using a hardcoded absolute file path or setwd() instead of a project-relative path, which breaks as soon as the project moves or is opened on another machine."
+  student_code: |-
+    data <- read.csv("C:/Users/me/Documents/project/data/raw/penguins.csv")
+  instructor_hint: "Plan two steps: build the file path with here::here(\"data\", \"raw\", \"penguins.csv\"), then read it with readr::read_csv() rather than base R read.csv()."
+  instructor_explanation: "here::here() builds a path relative to the project root, so the same code works no matter who runs it or where the working directory is. Pairing it with a readr function such as read_csv() keeps the loading step consistent with the rest of a tidyverse workflow and returns a tibble with more predictable column types than read.csv()."
+  tags: "here, readr, read_csv, file paths, project, plan"
+  source_path: "Oct-Intro-Analytics/importing-data.qmd"
+  match_terms: "here, read_csv, readr, import, load data, file path, csv, read.csv, project, data file"
+  packages: "here,readr"
+  error_pattern: ""
+
+- id: "hint-here-readr-paths"
+  mode: "hint"
+  topic: "using project-relative paths for data import"
+  student_question: "What's the tidy way to point to my data file instead of typing the full path?"
+  likely_misconception: "Believing a hardcoded path is required because otherwise R won't know where the file is."
+  student_code: |-
+    penguins_raw <- read.csv("/Users/student/Desktop/project/penguins.csv")
+  instructor_hint: "Swap the hardcoded path for here::here(\"penguins.csv\") inside readr::read_csv()."
+  instructor_explanation: "here::here() builds a path from the project root, so it keeps working when the project folder moves or is shared with someone else. Combine it with a readr function like read_csv() rather than base R's read.csv() to stay consistent with the rest of a tidyverse workflow."
+  tags: "here, readr, read_csv, file path, tidyverse"
+  source_path: "Oct-Intro-Analytics/importing-data.qmd"
+  match_terms: "here, read_csv, file path, hardcoded, absolute path, import, readr, load data"
+  packages: "here,readr"
+  error_pattern: ""
+
+- id: "debug-file-not-found-path"
+  mode: "debug"
+  topic: "file not found errors when reading data"
+  student_question: "Why do I get 'cannot open file' when my script runs on a different computer or working directory?"
+  likely_misconception: "Assuming a relative path such as \"data/penguins.csv\" or a hardcoded absolute path will always resolve to the same file, regardless of the working directory."
+  student_code: |-
+    data <- read.csv("data/penguins.csv")
+  instructor_hint: "Replace the path with here::here(\"data\", \"penguins.csv\") and check getwd() against the project root."
+  instructor_explanation: "A relative path depends on the current working directory, which changes depending on how and where a script is run. here::here() always resolves relative to the project root, so the same code works consistently across machines and working directories."
+  tags: "here, readr, file path, cannot open file, debugging"
+  source_path: "Oct-Intro-Analytics/importing-data.qmd"
+  match_terms: "cannot open file, file not found, here, working directory, getwd, path, read_csv, read.csv"
+  packages: "here,readr"
+  error_pattern: "cannot open file|No such file or directory"
+
 - id: "debug-lm-formula-order"
   mode: "debug"
   topic: "lm() argument order errors"

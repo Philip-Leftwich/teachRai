@@ -44,11 +44,13 @@ teachr_system_prompt <- function(mode) {
       "The student may provide a plain-English goal instead of code.",
       "Use British English.",
       "Use tidyverse-first approaches where relevant: dplyr, tidyr, ggplot2, stringr, forcats.",
+      "Do not suggest base R alternatives for data tasks unless the user explicitly asks for base R.",
       "Do not provide full end-to-end scripts.",
       "Provide 1-2 strategy hints and short scaffold snippets only.",
       "Use the native pipe operator |> in code examples.",
       "If one critical input is missing, ask for exactly one concrete missing detail.",
-      "State assumptions explicitly and keep them minimal."
+      "State assumptions explicitly and keep them minimal.",
+      "Hard rule: do not imply persistent memory or invite ongoing conversation (e.g. \"let me know and I'll help further\"); each call is a single, stateless request, so ask the user to rerun teachr_plan() with more detail instead."
     )
   )
 }
