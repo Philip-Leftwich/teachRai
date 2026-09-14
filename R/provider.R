@@ -29,7 +29,9 @@ teachr_default_provider <- function() {
 }
 
 teachr_resolve_provider <- function(provider = NULL) {
-  provider <- tolower(trimws(provider %||% teachr_default_provider()))
+  provider <- tolower(trimws(
+    provider %||% getOption("teachr.provider") %||% teachr_default_provider()
+  ))
   providers <- teachr_providers()
 
   if (!provider %in% names(providers)) {
@@ -48,5 +50,24 @@ teachr_resolve_api_key <- function(provider_info, api_key = NULL) {
 }
 
 teachr_resolve_model <- function(provider_info, model = NULL) {
-  model %||% provider_info$default_model
+  env_model <- Sys.getenv("TEACHR_MODEL", unset = "")
+  model %||%
+    getOption("teachr.model") %||%
+    (if (nzchar(env_model)) env_model else NULL) %||%
+    provider_info$default_model
+}
+
+teachr_set_model <- function(model, provider = NULL) {
+  options(teachr.model = model)
+
+  if (!is.null(provider)) {
+    teachr_set_provider(provider)
+  }
+
+  invisible(model)
+}
+
+teachr_set_provider <- function(provider) {
+  options(teachr.provider = tolower(trimws(provider)))
+  invisible(provider)
 }
