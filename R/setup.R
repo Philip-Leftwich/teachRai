@@ -1,4 +1,5 @@
 teachr_setup <- function(provider = NULL,
+                         model = NULL,
                          api_key = NULL,
                          open = interactive(),
                          renviron = path.expand("~/.Renviron")) {
@@ -26,6 +27,15 @@ teachr_setup <- function(provider = NULL,
     value = provider,
     path = renviron
   )
+
+  if (!is.null(model) && nzchar(trimws(model))) {
+    teachr_write_renviron_var(
+      name = "TEACHR_MODEL",
+      value = trimws(model),
+      path = renviron
+    )
+    message("Saved TEACHR_MODEL in ", renviron, ".")
+  }
 
   message("Saved ", provider_info$env_var, " in ", renviron, ".")
   message("Please restart R before using teachRai.")
