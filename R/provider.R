@@ -4,7 +4,7 @@ teachr_providers <- function() {
       label = "Google Gemini (currently free)",
       env_var = "GOOGLE_API_KEY",
       signup_url = "https://aistudio.google.com/app/apikey",
-      default_model = "gemini-3.7-flash",
+      default_model = "gemini-3.5-flash",
       constructor = "chat_google_gemini"
     ),
     openai = list(
